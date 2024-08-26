@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Display a Map with an Animated Icon</title>
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <script src="https://cdn.jsdelivr.net/npm/@goongmaps/goong-js@1.0.9/dist/goong-js.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/@goongmaps/goong-js@1.0.9/dist/goong-js.css" rel="stylesheet" />
+  <style>
+    body { margin: 0; padding: 0; }
+    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+
+<script>
+  goongjs.accessToken = 'sudo76Kz06zSoRHkqc5BpqpsIE6DimmioDSJg2qW';
+  var map = new goongjs.Map({
+    container: 'map',
+    style: 'https://tiles.goong.io/assets/goong_map_web.json',
+    center: [105.83991, 21.028], // starting position [lng, lat]
+    zoom: 12 // starting zoom
+  });
+
+  var size = 200;
+
+  var pulsingDot = {
+    width: size,
+    height: size,
+    data: new Uint8Array(size * size * 4),
+
+    onAdd: function () {
+      var canvas = document.createElement('canvas');
+      canvas.width = this.width;
+      canvas.height = this.height;
+      this.context = canvas.getContext('2d');
+    },
+
+    render: function () {
+      var duration = 1000;
+      var t = (performance.now() % duration) / duration;
+
+      var radius = (size / 2) * 0.3;
+      var outerRadius = (size / 2) * 0.7 * t + radius;
+      var context = this.context;
+
+      context.clearRect(0, 0, this.width, this.height);
+      context.beginPath();
+      context.arc(
+              this.width / 2,
+              this.height / 2,
+              outerRadius,
+              0,
+              Math.PI * 2
+      );
+      context.fillStyle = 'rgba(255, 200, 200,' + (1 - t) + ')';
+      context.fill();
+
+      context.beginPath();
+      context.arc(
+              this.width / 2,
+              this.height / 2,
+              radius,
+              0,
+              Math.PI * 2
+      );
+      context.fillStyle = 'rgba(255, 100, 100, 1)';
+      context.strokeStyle = 'white';
+      context.lineWidth = 2 + 4 * (1 - t);
+      context.fill();
+      context.stroke();
+
+      this.data = context.getImageData(0, 0, this.width, this.height).data;
+
+      map.triggerRepaint();
+      return true;
+    }
+  };
+
+  function getRandomCoordinate(current, range) {
+    const randomOffset = () => (Math.random() - 0.5) * range;
+    return [current[0] + randomOffset(), current[1] + randomOffset()];
+  }
+
+  function interpolateCoordinates(start, end, factor) {
+    return [
+      start[0] + (end[0] - start[0]) * factor,
+      start[1] + (end[1] - start[1]) * factor
+    ];
+  }
+
+  var center = [105.83991, 21.028]; // Center of Hanoi
+  var range = 0.01; // Smaller range for smoother movement
+  var currentCoordinates = center;
+  var targetCoordinates = getRandomCoordinate(currentCoordinates, range);
+  var interpolationFactor = 0.01; // Smaller factor for smoother movement
+
+  map.on('load', function () {
+    map.addImage('pulsing-dot', pulsingDot, { pixelRatio: 4 });
+
+    var pointData = {
+      'type': 'FeatureCollection',
+      'features': [
+        {
+          'type': 'Feature',
+          'geometry': {
+            'type': 'Point',
+            'coordinates': currentCoordinates
+          }
+        }
+      ]
+    };
+
+    map.addSource('points', {
+      'type': 'geojson',
+      'data': pointData
+    });
+
+    map.addLayer({
+      'id': 'points',
+      'type': 'symbol',
+      'source': 'points',
+      'layout': {
+        'icon-image': 'pulsing-dot'
+      }
+    });
+
+    function updateCoordinates() {
+      currentCoordinates = interpolateCoordinates(currentCoordinates, targetCoordinates, interpolationFactor);
+      pointData.features[0].geometry.coordinates = currentCoordinates;
+      map.getSource('points').setData(pointData);
+
+      if (Math.abs(currentCoordinates[0] - targetCoordinates[0]) < 0.00001 && Math.abs(currentCoordinates[1] - targetCoordinates[1]) < 0.00001) {
+        targetCoordinates = getRandomCoordinate(currentCoordinates, range);
+      }
+    }
+
+    setInterval(updateCoordinates, 100); // Update coordinates every 100 milliseconds
+  });
+</script>
+
+</body>
+</html>
