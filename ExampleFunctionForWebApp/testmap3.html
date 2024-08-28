@@ -103,6 +103,15 @@
     <button id="remove-account-button">Remove Account</button>
   </div>
 
+  <div id="change-password-container" style="display: none;">
+    <h2>Change Password</h2>
+    <form id="change-password-form">
+      <input type="password" id="old-password" placeholder="Old Password" required />
+      <input type="password" id="new-password" placeholder="New Password" required />
+      <button type="submit">Change Password</button>
+    </form>
+  </div>
+
   <div class="message" id="message"></div>
 
 
@@ -179,11 +188,12 @@
               document.getElementById('auth-container').style.display = 'none';
               document.getElementById('map-container').style.display = 'block';
               document.getElementById('map').style.display = 'block';
-              document.getElementById('add-child-button').style.display = 'block'; // Show the add child button
+              document.getElementById('add-child-button').style.display = 'block';
+              document.getElementById('remove-account-button').style.display = 'block';
+              document.getElementById('change-password-container').style.display = 'block'; // Show the change password form
               document.getElementById('add-child-button').addEventListener('click', function() {
                 addChild(data.staticID);
               });
-              document.getElementById('remove-account-button').style.display = 'block';
               document.getElementById('remove-account-button').addEventListener('click', function() {
                 removeAccount(data.staticID);
               });
@@ -193,6 +203,7 @@
               document.getElementById('message').textContent = 'Error: ' + error.message;
               document.getElementById('message').className = 'message error';
             });
+
   });
 
   document.getElementById('google-signin').addEventListener('click', function() {
@@ -231,6 +242,31 @@
               document.getElementById('message').className = 'message error';
             });
   });
+
+  document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const oldPassword = document.getElementById('old-password').value;
+    const newPassword = document.getElementById('new-password').value;
+
+    try {
+      const user = firebase.auth().currentUser;
+      const idToken = await user.getIdToken();
+      const response = await fetch('http://localhost:8000/changePassword', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken, OldPassword: oldPassword, NewPassword: newPassword })
+      });
+
+      if (response.ok) {
+        document.getElementById('message').textContent = 'Password changed successfully.';
+      } else {
+        document.getElementById('message').textContent = 'Password change failed.';
+      }
+    } catch (error) {
+      document.getElementById('message').textContent = `Error: ${error.message}`;
+    }
+  });
+
 
   // Goong map setup
   goongjs.accessToken = 'sudo76Kz06zSoRHkqc5BpqpsIE6DimmioDSJg2qW';
