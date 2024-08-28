@@ -3,7 +3,7 @@ package main
 import (
 	"cloud.google.com/go/firestore"
 	"context"
-	firebase "firebase.google.com/go"
+	"firebase.google.com/go"
 	"firebase.google.com/go/auth"
 	"google.golang.org/api/option"
 	"log"
