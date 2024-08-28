@@ -19,6 +19,7 @@ func main() {
 	router.HandleFunc("/login", loginUser).Methods("POST")
 	router.HandleFunc("/users/{staticID}/children", addChild).Methods("POST")
 	router.HandleFunc("/users/{staticID}/children", getChildren).Methods("GET")
+	router.HandleFunc("/users/{staticID}", deleteUser).Methods("DELETE")
 
 	// Configure CORS
 	corsHandler := handlers.CORS(

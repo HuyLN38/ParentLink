@@ -22,7 +22,7 @@
     #auth-container {
       display: block;
     }
-    #map-container, #add-child-button {
+    #map-container, #add-child-button, #remove-account-button {
       display: none;
     }
     h2 {
@@ -96,10 +96,16 @@
 
   <div id="map-container">
     <div id="map"></div>
+  </div>
+
+  <div class="container">
     <button id="add-child-button">Add Child</button>
+    <button id="remove-account-button">Remove Account</button>
   </div>
 
   <div class="message" id="message"></div>
+
+
 </div>
 
 <!-- Firebase SDK scripts -->
@@ -173,6 +179,14 @@
               document.getElementById('auth-container').style.display = 'none';
               document.getElementById('map-container').style.display = 'block';
               document.getElementById('map').style.display = 'block';
+              document.getElementById('add-child-button').style.display = 'block'; // Show the add child button
+              document.getElementById('add-child-button').addEventListener('click', function() {
+                addChild(data.staticID);
+              });
+              document.getElementById('remove-account-button').style.display = 'block';
+              document.getElementById('remove-account-button').addEventListener('click', function() {
+                removeAccount(data.staticID);
+              });
               getChildrenAndDisplay(map, data.staticID);
             })
             .catch(error => {
@@ -202,6 +216,14 @@
               document.getElementById('auth-container').style.display = 'none';
               document.getElementById('map-container').style.display = 'block';
               document.getElementById('map').style.display = 'block';
+              document.getElementById('add-child-button').style.display = 'block';
+              document.getElementById('add-child-button').addEventListener('click', function() {
+                addChild(data.staticID);
+              });
+              document.getElementById('remove-account-button').style.display = 'block';
+              document.getElementById('remove-account-button').addEventListener('click', function() {
+                removeAccount(data.staticID);
+              });
               getChildrenAndDisplay(map, data.staticID);
             })
             .catch(error => {
@@ -298,6 +320,63 @@
     };
   }
 
+    function generateRandomString(length) {
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        return result;
+    }
+
+  function getRandomCoordinate() {
+    const minLongitude = -180;
+    const maxLongitude = 180;
+    const minLatitude = -90;
+    const maxLatitude = 90;
+
+    const longitude = Math.random() * (maxLongitude - minLongitude) + minLongitude;
+    const latitude = Math.random() * (maxLatitude - minLatitude) + minLatitude;
+
+    return [longitude, latitude];
+  }
+
+  function addChild(staticID) {
+    const childName = generateRandomString(32);
+    const childLocation = getRandomCoordinate(); // Example location
+
+    fetch(`http://localhost:8000/users/${staticID}/children`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name: childName, location: childLocation })
+    })
+            .then(response => response.json())
+            .then(data => {
+              console.log('Child added:', data);
+            })
+            .catch(error => {
+              console.error('Error adding child:', error);
+            });
+  }
+
+  function removeAccount(staticID) {
+    fetch(`http://localhost:8000/users/${staticID}`, {
+      method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+            .then(response => response.json())
+            .then(data => {
+              console.log('Account removed:', data);
+            })
+            .catch(error => {
+              console.error('Error removing account:', error);
+            });
+  }
+
   function getChildrenAndDisplay(map, staticID) {
     function updateChildLocations() {
       fetch(`http://localhost:8000/users/${staticID}/children`)
@@ -325,13 +404,13 @@
     }
 
     // Update child locations every 50ms
-    setInterval(updateChildLocations, 500);
+    setInterval(updateChildLocations, 1000);
   }
 
   // Call the function after successful login and map initialization
   firebase.auth().onAuthStateChanged(user => {
     if (user) {
-      const staticID = user.staticID || ''; // Replace with how you get the staticID
+      const staticID = user.staticID; // Replace with how you get the staticID
       if (staticID) {
         getChildrenAndDisplay(map, staticID);
       } else {

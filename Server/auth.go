@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"net/http"
 )
 
@@ -70,4 +71,42 @@ func loginUser(w http.ResponseWriter, r *http.Request) {
 	doc.DataTo(&user)
 
 	json.NewEncoder(w).Encode(map[string]string{"staticID": user.StaticID})
+
+}
+
+func deleteUser(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	staticID := params["staticID"]
+
+	fmt.Println("Deleting user")
+
+	// Retrieve the user by static ID from Firestore
+	_, err := firestoreClient.Collection("users").Doc(staticID).Get(r.Context())
+	if err != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		fmt.Println(err)
+		return
+	}
+
+	// Delete the user document from Firestore
+	_, err = firestoreClient.Collection("users").Doc(staticID).Delete(r.Context())
+	if err != nil {
+		http.Error(w, "Failed to delete user", http.StatusInternalServerError)
+		fmt.Println(err)
+		return
+	}
+
+	// Delete the user from Firebase Authentication
+	err = authClient.DeleteUser(r.Context(), staticID)
+	if err != nil {
+		http.Error(w, "Failed to delete user from authentication", http.StatusInternalServerError)
+		fmt.Println(err)
+		return
+	}
+
+	response := map[string]string{
+		"message": "User deleted successfully",
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
