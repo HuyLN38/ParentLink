@@ -15,8 +15,8 @@ func main() {
 	router := mux.NewRouter()
 
 	// Define routes
-	router.HandleFunc("/register", registerUser).Methods("POST")
-	router.HandleFunc("/login", loginUser).Methods("POST")
+	router.HandleFunc("/register", registerHandler).Methods("POST")
+	router.HandleFunc("/login", loginHandler).Methods("POST")
 	router.HandleFunc("/users/{staticID}/children", addChild).Methods("POST")
 	router.HandleFunc("/users/{staticID}/children", getChildren).Methods("GET")
 	router.HandleFunc("/users/{staticID}", deleteUser).Methods("DELETE")

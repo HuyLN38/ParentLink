@@ -11,42 +11,34 @@ import (
 	"net/http"
 )
 
-type AuthRequest struct {
-	IDToken string `json:"idToken"`
-}
-
 type AuthPassword struct {
 	IDToken     string `json:"idToken"`
 	OldPassword string `json:"OldPassword"`
 	NewPassword string `json:"NewPassword"`
 }
 
-type User struct {
-	UID      string `json:"uid"`
-	StaticID string `json:"staticID"`
+type RegisterRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
-func registerUser(w http.ResponseWriter, r *http.Request) {
-	var req AuthRequest
-	fmt.Println("Registering user")
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+func registerHandler(w http.ResponseWriter, r *http.Request) {
+	var req RegisterRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
 
-	token, err := authClient.VerifyIDToken(r.Context(), req.IDToken)
-	if err != nil {
-		http.Error(w, "Invalid ID token", http.StatusUnauthorized)
-		fmt.Println(err)
-		return
-	}
+	params := (&auth.UserToCreate{}).
+		Email(req.Email).
+		Password(req.Password)
 
-	staticID := token.UID
-
-	_, err = firestoreClient.Collection("users").Doc(staticID).Set(r.Context(), User{
-		UID:      token.UID,
-		StaticID: staticID,
-	})
+	u, err := authClient.CreateUser(context.Background(), params)
 	if err != nil {
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
 		fmt.Println(err)
@@ -54,37 +46,46 @@ func registerUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := map[string]string{
-		"staticID": staticID,
-		"message":  "Registration successful",
+		"uid": u.UID,
 	}
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
 
-func loginUser(w http.ResponseWriter, r *http.Request) {
-	var req AuthRequest
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	var req LoginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
 
-	fmt.Println("Logging in user")
-	token, err := authClient.VerifyIDToken(r.Context(), req.IDToken)
+	authData := map[string]string{
+		"email":             req.Email,
+		"password":          req.Password,
+		"returnSecureToken": "true",
+	}
+	authDataBytes, err := json.Marshal(authData)
 	if err != nil {
-		http.Error(w, "Invalid ID token", http.StatusUnauthorized)
+		http.Error(w, "Failed to marshal auth data", http.StatusInternalServerError)
 		return
 	}
 
-	doc, err := firestoreClient.Collection("users").Where("UID", "==", token.UID).Documents(r.Context()).Next()
-	if err != nil {
-		http.Error(w, "User not found", http.StatusNotFound)
+	authResponse, err := http.Post("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyBiMYp6mh6ITGKHKQX6ebyx4h0p6tj-j5E", "application/json", bytes.NewBuffer(authDataBytes))
+
+	if err != nil || authResponse.StatusCode != http.StatusOK {
+		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
 
-	var user User
-	doc.DataTo(&user)
+	var authResult map[string]interface{}
+	if err := json.NewDecoder(authResponse.Body).Decode(&authResult); err != nil {
+		http.Error(w, "Failed to decode auth response", http.StatusInternalServerError)
+		return
+	}
 
-	json.NewEncoder(w).Encode(map[string]string{"staticID": user.StaticID})
+	response := authResult
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
 func changePassword(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +108,6 @@ func changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Re-authenticate user with old password
 	authData := map[string]string{
 		"email":             user.Email,
 		"password":          req.OldPassword,
@@ -124,7 +124,6 @@ func changePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Update password
 	params := (&auth.UserToUpdate{}).Password(req.NewPassword)
 	u, err := authClient.UpdateUser(context.Background(), token.UID, params)
 	if err != nil {
