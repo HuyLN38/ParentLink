@@ -5,6 +5,7 @@ import (
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -32,7 +33,13 @@ func main() {
 	// Wrap the router with the CORS handler
 	http.Handle("/", corsHandler(router))
 
+	// Get the port from the environment variable
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000" // Default port if not specified
+	}
+
 	// Start the server
-	log.Println("Server is starting on port 8000...")
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	log.Printf("Server is starting on port %s...", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
