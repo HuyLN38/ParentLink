@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"log"
+	"net/http"
 	"os"
 )
 
@@ -36,6 +37,8 @@ func main() {
 	router.DELETE("/users/:staticID", deleteUser)
 	router.POST("/changePassword", changePassword)
 
+	router.GET("/hello-world", myGetFunction)
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -46,4 +49,18 @@ func main() {
 
 	log.Printf("Server is starting on port %s...", port)
 	log.Fatal(router.Run(":" + port))
+}
+
+type simpleMessage struct {
+	Hello   string `json:"hello"`
+	Message string `json:"message"`
+}
+
+func myGetFunction(c *gin.Context) {
+	simpleMessage := simpleMessage{
+		Hello:   "World!",
+		Message: "Subscribe to my channel!",
+	}
+
+	c.IndentedJSON(http.StatusOK, simpleMessage)
 }
