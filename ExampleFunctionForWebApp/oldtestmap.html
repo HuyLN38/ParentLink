@@ -1,27 +1,463 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Display a map</title>
-  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <script src="https://cdn.jsdelivr.net/npm/@goongmaps/goong-js@1.0.9/dist/goong-js.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/@goongmaps/goong-js@1.0.9/dist/goong-js.css" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase Authentication and Map Display</title>
   <style>
-    body { margin: 0; padding: 0; }
-    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f9;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    #auth-container {
+      display: block;
+    }
+    #map-container, #add-child-button, #remove-account-button {
+      display: none;
+    }
+    h2 {
+      color: #333;
+    }
+    form {
+      margin-bottom: 20px;
+    }
+    input[type="email"],
+    input[type="password"] {
+      width: calc(100% - 22px);
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #007bff;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .message {
+      color: #333;
+      margin-top: 20px;
+    }
+    .error {
+      color: #e74c3c;
+    }
+    .success {
+      color: #2ecc71;
+    }
+    #map {
+      width: 100%;
+      height: 400px;
+      margin-top: 20px;
+      border-radius: 8px;
+      display: none;
+    }
   </style>
 </head>
 <body>
-<div id="map"></div>
-<script>
-  goongjs.accessToken = '8qzxZAuxcsctSlmOszInchP1A5GrmRBHJwCBCjO6';
-  var map = new goongjs.Map({
-    container: 'map', // container id
-    style: 'https://tiles.goong.io/assets/goong_map_web.json', // stylesheet location
-    center: [105.83991, 21.028], // starting position [lng, lat]
-    zoom: 12 // starting zoom
-  });
-</script>
+<div class="container">
+  <div id="auth-container">
+    <h2>Sign Up</h2>
+    <form id="signup-form">
+      <input type="email" id="signup-email" placeholder="Email" required />
+      <input type="password" id="signup-password" placeholder="Password" required />
+      <button type="submit">Sign Up</button>
+    </form>
 
+    <h2>Sign In</h2>
+    <form id="signin-form">
+      <input type="email" id="signin-email" placeholder="Email" required />
+      <input type="password" id="signin-password" placeholder="Password" required />
+      <button type="submit">Sign In</button>
+    </form>
+
+    <div class="auth-methods">
+      <h2>Sign In with Google</h2>
+      <button id="google-signin">Sign In with Google</button>
+    </div>
+  </div>
+
+  <div id="map-container">
+    <div id="map"></div>
+  </div>
+
+  <div class="container">
+    <button id="add-child-button">Add Child</button>
+    <button id="remove-account-button">Remove Account</button>
+  </div>
+
+  <div id="change-password-container" style="display: none;">
+    <h2>Change Password</h2>
+    <form id="change-password-form">
+      <input type="password" id="old-password" placeholder="Old Password" required />
+      <input type="password" id="new-password" placeholder="New Password" required />
+      <button type="submit">Change Password</button>
+    </form>
+  </div>
+
+  <div class="message" id="message"></div>
+
+
+</div>
+
+<!-- Firebase SDK scripts -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@goongmaps/goong-js@1.0.9/dist/goong-js.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/@goongmaps/goong-js@1.0.9/dist/goong-js.css" rel="stylesheet" />
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBiMYp6mh6ITGKHKQX6ebyx4h0p6tj-j5E",
+    authDomain: "parentlink-30210.firebaseapp.com",
+    projectId: "parentlink-30210",
+    storageBucket: "parentlink-30210.appspot.com",
+    messagingSenderId: "1068208449918",
+    appId: "1:1068208449918:web:1e8e2d718775473ebcab2f",
+    measurementId: "G-K1Y01E2M2J"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+
+  document.getElementById('signup-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = document.getElementById('signup-email').value;
+    const password = document.getElementById('signup-password').value;
+
+    firebase.auth().createUserWithEmailAndPassword(email, password)
+            .then(userCredential => userCredential.user.getIdToken())
+            .then(idToken => {
+              return fetch('http://localhost:8000/register', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ idToken })
+              });
+            })
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('message').textContent = 'Sign Up successful';
+              document.getElementById('message').className = 'message success';
+            })
+            .catch(error => {
+              document.getElementById('message').textContent = 'Error: ' + error.message;
+              document.getElementById('message').className = 'message error';
+            });
+  });
+
+  document.getElementById('signin-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = document.getElementById('signin-email').value;
+    const password = document.getElementById('signin-password').value;
+
+    firebase.auth().signInWithEmailAndPassword(email, password)
+            .then(userCredential => userCredential.user.getIdToken())
+            .then(idToken => {
+              return fetch('http://localhost:8000/login', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ idToken })
+              });
+            })
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('message').textContent = 'Sign In successful';
+              document.getElementById('message').className = 'message success';
+              document.getElementById('auth-container').style.display = 'none';
+              document.getElementById('map-container').style.display = 'block';
+              document.getElementById('map').style.display = 'block';
+              document.getElementById('add-child-button').style.display = 'block';
+              document.getElementById('remove-account-button').style.display = 'block';
+              document.getElementById('change-password-container').style.display = 'block'; // Show the change password form
+              document.getElementById('add-child-button').addEventListener('click', function() {
+                addChild(data.staticID);
+              });
+              document.getElementById('remove-account-button').addEventListener('click', function() {
+                removeAccount(data.staticID);
+              });
+              getChildrenAndDisplay(map, data.staticID);
+            })
+            .catch(error => {
+              document.getElementById('message').textContent = 'Error: ' + error.message;
+              document.getElementById('message').className = 'message error';
+            });
+
+  });
+
+  document.getElementById('google-signin').addEventListener('click', function() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+
+    firebase.auth().signInWithPopup(provider)
+            .then(result => result.user.getIdToken())
+            .then(idToken => {
+              return fetch('http://localhost:8000/login', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ idToken })
+              });
+            })
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('message').textContent = 'Google Sign In successful';
+              document.getElementById('message').className = 'message success';
+              document.getElementById('auth-container').style.display = 'none';
+              document.getElementById('map-container').style.display = 'block';
+              document.getElementById('map').style.display = 'block';
+              document.getElementById('add-child-button').style.display = 'block';
+              document.getElementById('add-child-button').addEventListener('click', function() {
+                addChild(data.staticID);
+              });
+              document.getElementById('remove-account-button').style.display = 'block';
+              document.getElementById('remove-account-button').addEventListener('click', function() {
+                removeAccount(data.staticID);
+              });
+              getChildrenAndDisplay(map, data.staticID);
+            })
+            .catch(error => {
+              document.getElementById('message').textContent = 'Error: ' + error.message;
+              document.getElementById('message').className = 'message error';
+            });
+  });
+
+  document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const oldPassword = document.getElementById('old-password').value;
+    const newPassword = document.getElementById('new-password').value;
+
+    try {
+      const user = firebase.auth().currentUser;
+      const idToken = await user.getIdToken();
+      const response = await fetch('http://localhost:8000/changePassword', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken, OldPassword: oldPassword, NewPassword: newPassword })
+      });
+
+      if (response.ok) {
+        document.getElementById('message').textContent = 'Password changed successfully.';
+      } else {
+        document.getElementById('message').textContent = 'Password change failed.';
+      }
+    } catch (error) {
+      document.getElementById('message').textContent = `Error: ${error.message}`;
+    }
+  });
+
+
+  // Goong map setup
+  goongjs.accessToken = 'sudo76Kz06zSoRHkqc5BpqpsIE6DimmioDSJg2qW';
+  const map = new goongjs.Map({
+    container: 'map',
+    style: 'https://tiles.goong.io/assets/goong_map_web.json',
+    center: [105.83991, 21.028],
+    zoom: 12
+  });
+
+  map.on('load', function() {
+    map.addSource('children', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] }
+    });
+
+    map.addLayer({
+      id: 'children-points',
+      type: 'symbol',
+      source: 'children',
+      layout: {
+        'icon-image': 'pulsing-dot',
+        'icon-size': 1,
+        'icon-allow-overlap': true
+      }
+    });
+
+    // Add pulsing dot image
+    map.addImage('pulsing-dot', createPulsingDot(), { pixelRatio: 2 });
+
+  });
+
+  function createPulsingDot() {
+    const size = 100;
+
+    return {
+      width: size,
+      height: size,
+      data: new Uint8Array(size * size * 4),
+
+      onAdd: function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = this.width;
+        canvas.height = this.height;
+        this.context = canvas.getContext('2d');
+      },
+
+      render: function () {
+        var duration = 1000;
+        var t = (performance.now() % duration) / duration;
+
+        var radius = (size / 2) * 0.3;
+        var outerRadius = (size / 2) * 0.7 * t + radius;
+        var context = this.context;
+
+        context.clearRect(0, 0, this.width, this.height);
+        context.beginPath();
+        context.arc(
+                this.width / 2,
+                this.height / 2,
+                outerRadius,
+                0,
+                Math.PI * 2
+        );
+        context.fillStyle = 'rgba(255, 200, 200,' + (1 - t) + ')';
+        context.fill();
+
+        context.beginPath();
+        context.arc(
+                this.width / 2,
+                this.height / 2,
+                radius,
+                0,
+                Math.PI * 2
+        );
+        context.fillStyle = 'rgba(255, 100, 100, 1)';
+        context.strokeStyle = 'white';
+        context.lineWidth = 2 + 4 * (1 - t);
+        context.fill();
+        context.stroke();
+
+        this.data = context.getImageData(0, 0, this.width, this.height).data;
+
+        map.triggerRepaint();
+        return true;
+      }
+    };
+  }
+
+  function generateRandomString(length) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+  }
+
+  function getRandomCoordinate() {
+    const minLongitude = -180;
+    const maxLongitude = 180;
+    const minLatitude = -90;
+    const maxLatitude = 90;
+
+    const longitude = Math.random() * (maxLongitude - minLongitude) + minLongitude;
+    const latitude = Math.random() * (maxLatitude - minLatitude) + minLatitude;
+
+    return [longitude, latitude];
+  }
+
+  function addChild(staticID) {
+    const childName = generateRandomString(32);
+    const childLocation = getRandomCoordinate(); // Example location
+
+    fetch(`http://localhost:8000/users/${staticID}/children`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name: childName, location: childLocation })
+    })
+            .then(response => response.json())
+            .then(data => {
+              console.log('Child added:', data);
+            })
+            .catch(error => {
+              console.error('Error adding child:', error);
+            });
+  }
+
+  function removeAccount(staticID) {
+    fetch(`http://localhost:8000/users/${staticID}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+            .then(response => response.json())
+            .then(data => {
+              console.log('Account removed:', data);
+            })
+            .catch(error => {
+              console.error('Error removing account:', error);
+            });
+  }
+
+  function getChildrenAndDisplay(map, staticID) {
+    function updateChildLocations() {
+      fetch(`http://localhost:8000/users/${staticID}/children`)
+              .then(response => response.json())
+              .then(data => {
+                const geojsonData = {
+                  type: 'FeatureCollection',
+                  features: data.map(child => ({
+                    type: 'Feature',
+                    geometry: {
+                      type: 'Point',
+                      coordinates: child.location // Ensure correct longitude, latitude
+                    },
+                    properties: { name: child.name }
+                  }))
+                };
+
+                if (map.getSource('children')) {
+                  map.getSource('children').setData(geojsonData);
+                } else {
+                  console.error('Map source "children" is not available.');
+                }
+              })
+              .catch(error => console.error('Error fetching children data:', error));
+    }
+
+    // Update child locations every 50ms
+    setInterval(updateChildLocations, 1000);
+  }
+
+  // Call the function after successful login and map initialization
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      const staticID = user.staticID; // Replace with how you get the staticID
+      if (staticID) {
+        getChildrenAndDisplay(map, staticID);
+      } else {
+        console.error('Static ID is not available.');
+      }
+    } else {
+      console.error('User is not logged in.');
+    }
+  });
+
+
+</script>
 </body>
 </html>
