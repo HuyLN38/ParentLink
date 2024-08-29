@@ -1,144 +1,444 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Display a Map with an Animated Icon</title>
-  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <script src="https://cdn.jsdelivr.net/npm/@goongmaps/goong-js@1.0.9/dist/goong-js.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/@goongmaps/goong-js@1.0.9/dist/goong-js.css" rel="stylesheet" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authentication and Map Display</title>
   <style>
-    body { margin: 0; padding: 0; }
-    #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: #f4f4f9;
+    }
+    .container {
+      max-width: 600px;
+      margin: auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    #auth-container {
+      display: block;
+    }
+    #map-container, #add-child-button, #remove-account-button {
+      display: none;
+    }
+    h2 {
+      color: #333;
+    }
+    form {
+      margin-bottom: 20px;
+    }
+    input[type="email"],
+    input[type="password"] {
+      width: calc(100% - 22px);
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #007bff;
+      border: none;
+      border-radius: 4px;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .message {
+      color: #333;
+      margin-top: 20px;
+    }
+    .error {
+      color: #e74c3c;
+    }
+    .success {
+      color: #2ecc71;
+    }
+    #map {
+      width: 100%;
+      height: 400px;
+      margin-top: 20px;
+      border-radius: 8px;
+      display: none;
+    }
   </style>
 </head>
 <body>
-<div id="map"></div>
+<div class="container">
+  <div id="auth-container">
+    <h2>Sign Up</h2>
+    <form id="signup-form">
+      <input type="email" id="signup-email" placeholder="Email" required />
+      <input type="password" id="signup-password" placeholder="Password" required />
+      <button type="submit">Sign Up</button>
+    </form>
+
+    <h2>Sign In</h2>
+    <form id="signin-form">
+      <input type="email" id="signin-email" placeholder="Email" required />
+      <input type="password" id="signin-password" placeholder="Password" required />
+      <button type="submit">Sign In</button>
+    </form>
+
+    <div class="auth-methods">
+      <h2>Sign In with Google</h2>
+      <button id="google-signin">Sign In with Google</button>
+    </div>
+
+    <h2>Forgot Password</h2>
+    <form id="forgot-password-form">
+      <input type="email" id="forgot-password-email" placeholder="Email" required />
+      <button type="submit">Reset Password</button>
+    </form>
+  </div>
+
+  <div id="map-container">
+    <div id="map"></div>
+  </div>
+
+  <div class="container">
+    <button id="add-child-button">Add Child</button>
+    <button id="remove-account-button">Remove Account</button>
+  </div>
+
+  <div id="change-password-container" style="display: none;">
+    <h2>Change Password</h2>
+    <form id="change-password-form">
+      <input type="password" id="old-password" placeholder="Old Password" required />
+      <input type="password" id="new-password" placeholder="New Password" required />
+      <button type="submit">Change Password</button>
+    </form>
+  </div>
+
+  <div class="message" id="message"></div>
+</div>
+
+<!-- Firebase SDK scripts -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@goongmaps/goong-js@1.0.9/dist/goong-js.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/@goongmaps/goong-js@1.0.9/dist/goong-js.css" rel="stylesheet" />
 
 <script>
-  goongjs.accessToken = 'sudo76Kz06zSoRHkqc5BpqpsIE6DimmioDSJg2qW';
-  var map = new goongjs.Map({
-    container: 'map',
-    style: 'https://tiles.goong.io/assets/goong_map_web.json',
-    center: [105.83991, 21.028], // starting position [lng, lat]
-    zoom: 12 // starting zoom
+  // Replace with your own Go server URL
+  const serverUrl = 'https://parentlink-api.onrender.com:8000';
+  var user = null;
+
+  document.getElementById('signup-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = document.getElementById('signup-email').value;
+    const password = document.getElementById('signup-password').value;
+
+    fetch(`${serverUrl}/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
+    })
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('message').textContent = 'Sign Up successful';
+              document.getElementById('message').className = 'message success';
+            })
+            .catch(error => {
+              document.getElementById('message').textContent = 'Error: ' + error.message;
+              document.getElementById('message').className = 'message error';
+            });
   });
 
-  var size = 200;
+  document.getElementById('signin-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = document.getElementById('signin-email').value;
+    const password = document.getElementById('signin-password').value;
 
-  var pulsingDot = {
-    width: size,
-    height: size,
-    data: new Uint8Array(size * size * 4),
+    fetch(`${serverUrl}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email, password })
+    })
+            .then(response => response.json())
+            .then(data => {
+              user = data; // Extract user from response
+              document.getElementById('message').textContent = 'Sign In successful';
+              document.getElementById('message').className = 'message success';
+              document.getElementById('auth-container').style.display = 'none';
+              document.getElementById('map-container').style.display = 'block';
+              document.getElementById('map').style.display = 'block';
+              document.getElementById('add-child-button').style.display = 'block';
+              document.getElementById('remove-account-button').style.display = 'block';
+              document.getElementById('change-password-container').style.display = 'block'; // Show the change password form
+              document.getElementById('add-child-button').addEventListener('click', function() {
+                addChild(user.localId);
+              });
+              document.getElementById('remove-account-button').addEventListener('click', function() {
+                removeAccount(user.localId);
+              });
+              getChildrenAndDisplay(map, user.localId);
+            })
+            .catch(error => {
+              document.getElementById('message').textContent = 'Error: ' + error.message;
+              document.getElementById('message').className = 'message error';
+            });
+  });
 
-    onAdd: function () {
-      var canvas = document.createElement('canvas');
-      canvas.width = this.width;
-      canvas.height = this.height;
-      this.context = canvas.getContext('2d');
-    },
+  document.getElementById('google-signin').addEventListener('click', function() {
+    fetch(`${serverUrl}/google-signin`, {
+      method: 'POST'
+    })
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('message').textContent = 'Google Sign In successful';
+              document.getElementById('message').className = 'message success';
+              document.getElementById('auth-container').style.display = 'none';
+              document.getElementById('map-container').style.display = 'block';
+              document.getElementById('map').style.display = 'block';
+              document.getElementById('add-child-button').style.display = 'block';
+              document.getElementById('add-child-button').addEventListener('click', function() {
+                addChild(user.localId);
+              });
+              document.getElementById('remove-account-button').style.display = 'block';
+              document.getElementById('remove-account-button').addEventListener('click', function() {
+                removeAccount(user.localId);
+              });
+              getChildrenAndDisplay(map, user.localId);
+            })
+            .catch(error => {
+              document.getElementById('message').textContent = 'Error: ' + error.message;
+              document.getElementById('message').className = 'message error';
+            });
+  });
 
-    render: function () {
-      var duration = 1000;
-      var t = (performance.now() % duration) / duration;
+  document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const oldPassword = document.getElementById('old-password').value;
+    const newPassword = document.getElementById('new-password').value;
 
-      var radius = (size / 2) * 0.3;
-      var outerRadius = (size / 2) * 0.7 * t + radius;
-      var context = this.context;
+    try {
+      const response = await fetch('http://localhost:8000/changePassword', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken : user.idToken, OldPassword: oldPassword, NewPassword: newPassword })
+      });
 
-      context.clearRect(0, 0, this.width, this.height);
-      context.beginPath();
-      context.arc(
-              this.width / 2,
-              this.height / 2,
-              outerRadius,
-              0,
-              Math.PI * 2
-      );
-      context.fillStyle = 'rgba(255, 200, 200,' + (1 - t) + ')';
-      context.fill();
-
-      context.beginPath();
-      context.arc(
-              this.width / 2,
-              this.height / 2,
-              radius,
-              0,
-              Math.PI * 2
-      );
-      context.fillStyle = 'rgba(255, 100, 100, 1)';
-      context.strokeStyle = 'white';
-      context.lineWidth = 2 + 4 * (1 - t);
-      context.fill();
-      context.stroke();
-
-      this.data = context.getImageData(0, 0, this.width, this.height).data;
-
-      map.triggerRepaint();
-      return true;
+      if (response.ok) {
+        document.getElementById('message').textContent = 'Password changed successfully.';
+      } else {
+        document.getElementById('message').textContent = 'Password change failed.';
+      }
+    } catch (error) {
+      document.getElementById('message').textContent = `Error: ${error.message}`;
     }
-  };
+  });
 
-  function getRandomCoordinate(current, range) {
-    const randomOffset = () => (Math.random() - 0.5) * range;
-    return [current[0] + randomOffset(), current[1] + randomOffset()];
-  }
+  document.getElementById('forgot-password-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const email = document.getElementById('forgot-password-email').value;
 
-  function interpolateCoordinates(start, end, factor) {
-    return [
-      start[0] + (end[0] - start[0]) * factor,
-      start[1] + (end[1] - start[1]) * factor
-    ];
-  }
+    fetch(`${serverUrl}/forgot-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email })
+    })
+            .then(response => response.json())
+            .then(data => {
+              document.getElementById('message').textContent = 'Password reset link sent';
+              document.getElementById('message').className = 'message success';
+            })
+            .catch(error => {
+              document.getElementById('message').textContent = 'Error: ' + error.message;
+              document.getElementById('message').className = 'message error';
+            });
+  });
 
-  var center = [105.83991, 21.028]; // Center of Hanoi
-  var range = 0.01; // Smaller range for smoother movement
-  var currentCoordinates = center;
-  var targetCoordinates = getRandomCoordinate(currentCoordinates, range);
-  var interpolationFactor = 0.01; // Smaller factor for smoother movement
+  // Goong map setup
+  goongjs.accessToken = 'sudo76Kz06zSoRHkqc5BpqpsIE6DimmioDSJg2qW';
+  const map = new goongjs.Map({
+    container: 'map',
+    style: 'https://tiles.goong.io/assets/goong_map_web.json',
+    center: [105.83991, 21.028],
+    zoom: 12
+  });
 
-  map.on('load', function () {
-    map.addImage('pulsing-dot', pulsingDot, { pixelRatio: 4 });
-
-    var pointData = {
-      'type': 'FeatureCollection',
-      'features': [
-        {
-          'type': 'Feature',
-          'geometry': {
-            'type': 'Point',
-            'coordinates': currentCoordinates
-          }
-        }
-      ]
-    };
-
-    map.addSource('points', {
-      'type': 'geojson',
-      'data': pointData
+  map.on('load', function() {
+    map.addSource('children', {
+      type: 'geojson',
+      data: { type: 'FeatureCollection', features: [] }
     });
 
     map.addLayer({
-      'id': 'points',
-      'type': 'symbol',
-      'source': 'points',
-      'layout': {
-        'icon-image': 'pulsing-dot'
+      id: 'children-points',
+      type: 'symbol',
+      source: 'children',
+      layout: {
+        'icon-image': 'pulsing-dot',
+        'icon-size': 1,
+        'icon-allow-overlap': true
       }
     });
 
-    function updateCoordinates() {
-      currentCoordinates = interpolateCoordinates(currentCoordinates, targetCoordinates, interpolationFactor);
-      pointData.features[0].geometry.coordinates = currentCoordinates;
-      map.getSource('points').setData(pointData);
+    // Add pulsing dot image
+    map.addImage('pulsing-dot', createPulsingDot(), { pixelRatio: 2 });
 
-      if (Math.abs(currentCoordinates[0] - targetCoordinates[0]) < 0.00001 && Math.abs(currentCoordinates[1] - targetCoordinates[1]) < 0.00001) {
-        targetCoordinates = getRandomCoordinate(currentCoordinates, range);
+  });
+
+  function createPulsingDot() {
+    const size = 100;
+
+    return {
+      width: size,
+      height: size,
+      data: new Uint8Array(size * size * 4),
+
+      onAdd: function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = this.width;
+        canvas.height = this.height;
+        this.context = canvas.getContext('2d');
+      },
+
+      render: function () {
+        var duration = 1000;
+        var t = (performance.now() % duration) / duration;
+
+        var radius = (size / 2) * 0.3;
+        var outerRadius = (size / 2) * 0.7 * t + radius;
+        var context = this.context;
+
+        context.clearRect(0, 0, this.width, this.height);
+        context.beginPath();
+        context.arc(
+                this.width / 2,
+                this.height / 2,
+                outerRadius,
+                0,
+                Math.PI * 2
+        );
+        context.fillStyle = 'rgba(255, 200, 200,' + (1 - t) + ')';
+        context.fill();
+
+        context.beginPath();
+        context.arc(
+                this.width / 2,
+                this.height / 2,
+                radius,
+                0,
+                Math.PI * 2
+        );
+        context.fillStyle = 'rgba(255, 100, 100, 1)';
+        context.strokeStyle = 'white';
+        context.lineWidth = 2 + 4 * (1 - t);
+        context.fill();
+        context.stroke();
+
+        this.data = context.getImageData(0, 0, this.width, this.height).data;
+
+        map.triggerRepaint();
+        return true;
       }
+    };
+  }
+
+  function generateRandomString(length) {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = '';
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+  }
+
+  function getRandomCoordinate() {
+    const minLongitude = -180;
+    const maxLongitude = 180;
+    const minLatitude = -90;
+    const maxLatitude = 90;
+
+    const longitude = Math.random() * (maxLongitude - minLongitude) + minLongitude;
+    const latitude = Math.random() * (maxLatitude - minLatitude) + minLatitude;
+
+    return [longitude, latitude];
+  }
+
+  function addChild(staticID) {
+    const childName = generateRandomString(32);
+    const childLocation = getRandomCoordinate(); // Example location
+
+    fetch(`http://localhost:8000/users/${staticID}/children`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name: childName, location: childLocation })
+    })
+            .then(response => response.json())
+            .then(data => {
+              console.log('Child added:', data);
+            })
+            .catch(error => {
+              console.error('Error adding child:', error);
+            });
+  }
+
+  function removeAccount(staticID) {
+    fetch(`http://localhost:8000/users/${staticID}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+            .then(response => response.json())
+            .then(data => {
+              console.log('Account removed:', data);
+            })
+            .catch(error => {
+              console.error('Error removing account:', error);
+            });
+  }
+
+  function getChildrenAndDisplay(map) {
+    function updateChildLocations() {
+      fetch(`http://localhost:8000/users/${user.localId}/children`)
+              .then(response => response.json())
+              .then(data => {
+                const geojsonData = {
+                  type: 'FeatureCollection',
+                  features: data.map(child => ({
+                    type: 'Feature',
+                    geometry: {
+                      type: 'Point',
+                      coordinates: child.location // Ensure correct longitude, latitude
+                    },
+                    properties: { name: child.name }
+                  }))
+                };
+
+                if (map.getSource('children')) {
+                  map.getSource('children').setData(geojsonData);
+                } else {
+                  console.error('Map source "children" is not available.');
+                }
+              })
+              .catch(error => console.error('Error fetching children data:', error));
     }
 
-    setInterval(updateCoordinates, 100); // Update coordinates every 100 milliseconds
-  });
+    // Update child locations every 50ms
+    setInterval(updateChildLocations, 1000);
+  }
 </script>
-
 </body>
 </html>
