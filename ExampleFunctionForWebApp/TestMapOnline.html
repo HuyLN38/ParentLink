@@ -133,7 +133,7 @@
   var serverUrl;
   async function determineServerUrl() {
     try {
-      const response = await fetch('http://localhost:8000');
+      const response = await fetch('http://localhost:8000/users/123/children');
       if (!response.ok) throw new Error('Primary server response not ok');
       serverUrl = 'http://localhost:8000';
     } catch (error) {
