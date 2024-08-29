@@ -130,8 +130,22 @@
 <link href="https://cdn.jsdelivr.net/npm/@goongmaps/goong-js@1.0.9/dist/goong-js.css" rel="stylesheet" />
 
 <script>
-  // Replace with your own Go server URL
-  const serverUrl = 'https://parentlink-api.onrender.com';
+  var serverUrl;
+  async function determineServerUrl() {
+    try {
+      const response = await fetch('http://localhost:8000');
+      if (!response.ok) throw new Error('Primary server response not ok');
+      serverUrl = 'http://localhost:8000';
+    } catch (error) {
+      console.error('Primary server failed, switching to fallback:', error);
+      serverUrl = 'https://parentlink-api.onrender.com';
+    }
+  }
+
+  determineServerUrl().then(() => {
+    console.log('Using server URL:', serverUrl);
+    // You can now use serverUrl for further requests
+  });
   var user = null;
 
   document.getElementById('signup-form').addEventListener('submit', async function(e) {

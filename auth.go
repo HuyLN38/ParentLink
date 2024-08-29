@@ -151,7 +151,7 @@ func deleteUser(c *gin.Context) {
 		return
 	}
 
-	_, err = firestoreClient.Collection("users").Doc(staticID).Delete(c.Request.Context())
+	_, err = firestoreClient.Collection(`users`).Doc(staticID).Delete(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
 		fmt.Println(err)
