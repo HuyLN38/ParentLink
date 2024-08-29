@@ -2,9 +2,7 @@ package main
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/handlers"
 	"log"
-	"net/http"
 	"os"
 )
 
@@ -31,8 +29,6 @@ func main() {
 	// Create a new router
 	router := gin.Default()
 	router.Use(CORSMiddleware())
-
-	// Define routes
 	router.POST("/register", registerHandler)
 	router.POST("/login", loginHandler)
 	router.POST("/users/:staticID/children", addChild)
@@ -40,23 +36,14 @@ func main() {
 	router.DELETE("/users/:staticID", deleteUser)
 	router.POST("/changePassword", changePassword)
 
-	// Configure CORS
-	corsHandler := handlers.CORS(
-		handlers.AllowedOrigins([]string{"*"}),                                       // Allow all origins; change "*" to specific origins in production
-		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}), // Allow specific methods
-		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),           // Allow specific headers
-	)
-
-	// Wrap the router with the CORS handler
-	http.Handle("/", corsHandler(router))
-
-	// Get the port from the environment variable
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8000" // Default port if not specified
+		port = "8080"
+	}
+	if err := router.Run(":" + port); err != nil {
+		log.Panicf("error: %s", err)
 	}
 
-	// Start the server
 	log.Printf("Server is starting on port %s...", port)
 	log.Fatal(router.Run(":" + port))
 }
