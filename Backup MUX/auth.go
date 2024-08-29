@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"firebase.google.com/go/auth"
 	"fmt"
-	"github.com/gin-gonic/gin"
+	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 )
@@ -27,10 +27,10 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-func registerHandler(c *gin.Context) {
+func registerHandler(w http.ResponseWriter, r *http.Request) {
 	var req RegisterRequest
-	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
 
@@ -40,7 +40,7 @@ func registerHandler(c *gin.Context) {
 
 	u, err := authClient.CreateUser(context.Background(), params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+		http.Error(w, "Failed to create user", http.StatusInternalServerError)
 		fmt.Println(err)
 		return
 	}
@@ -48,14 +48,14 @@ func registerHandler(c *gin.Context) {
 	response := map[string]string{
 		"uid": u.UID,
 	}
-	c.Writer.Header().Set("Content-Type", "application/json")
-	c.JSON(http.StatusOK, response)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
-func loginHandler(c *gin.Context) {
+func loginHandler(w http.ResponseWriter, r *http.Request) {
 	var req LoginRequest
-	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
 
@@ -66,45 +66,45 @@ func loginHandler(c *gin.Context) {
 	}
 	authDataBytes, err := json.Marshal(authData)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to marshal auth data"})
+		http.Error(w, "Failed to marshal auth data", http.StatusInternalServerError)
 		return
 	}
 
 	authResponse, err := http.Post("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyBiMYp6mh6ITGKHKQX6ebyx4h0p6tj-j5E", "application/json", bytes.NewBuffer(authDataBytes))
 
 	if err != nil || authResponse.StatusCode != http.StatusOK {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
 
 	var authResult map[string]interface{}
 	if err := json.NewDecoder(authResponse.Body).Decode(&authResult); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to decode auth response"})
+		http.Error(w, "Failed to decode auth response", http.StatusInternalServerError)
 		return
 	}
 
 	response := authResult
-	c.Writer.Header().Set("Content-Type", "application/json")
-	c.JSON(http.StatusOK, response)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
-func changePassword(c *gin.Context) {
+func changePassword(w http.ResponseWriter, r *http.Request) {
 	var req AuthPassword
-	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
 
 	fmt.Println("Changing password")
-	token, err := authClient.VerifyIDToken(c.Request.Context(), req.IDToken)
+	token, err := authClient.VerifyIDToken(r.Context(), req.IDToken)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid ID token"})
+		http.Error(w, "Invalid ID token", http.StatusUnauthorized)
 		return
 	}
 
-	user, err := authClient.GetUser(c.Request.Context(), token.UID)
+	user, err := authClient.GetUser(r.Context(), token.UID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
 
@@ -115,19 +115,19 @@ func changePassword(c *gin.Context) {
 	}
 	authDataBytes, err := json.Marshal(authData)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to marshal auth data"})
+		http.Error(w, "Failed to marshal auth data", http.StatusInternalServerError)
 		return
 	}
 	authResponse, err := http.Post("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyBiMYp6mh6ITGKHKQX6ebyx4h0p6tj-j5E", "application/json", bytes.NewBuffer(authDataBytes))
 	if err != nil || authResponse.StatusCode != http.StatusOK {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Old password is incorrect"})
+		http.Error(w, "Old password is incorrect", http.StatusUnauthorized)
 		return
 	}
 
 	params := (&auth.UserToUpdate{}).Password(req.NewPassword)
 	u, err := authClient.UpdateUser(context.Background(), token.UID, params)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update password"})
+		http.Error(w, "Failed to update password", http.StatusInternalServerError)
 		return
 	}
 
@@ -136,31 +136,32 @@ func changePassword(c *gin.Context) {
 	response := map[string]string{
 		"message": "Password changed successfully",
 	}
-	c.Writer.Header().Set("Content-Type", "application/json")
-	c.JSON(http.StatusOK, response)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }
 
-func deleteUser(c *gin.Context) {
-	staticID := c.Param("staticID")
+func deleteUser(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	staticID := params["staticID"]
 
 	fmt.Println("Deleting user")
-	_, err := firestoreClient.Collection("users").Doc(staticID).Get(c.Request.Context())
+	_, err := firestoreClient.Collection("users").Doc(staticID).Get(r.Context())
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		http.Error(w, "User not found", http.StatusNotFound)
 		fmt.Println(err)
 		return
 	}
 
-	_, err = firestoreClient.Collection("users").Doc(staticID).Delete(c.Request.Context())
+	_, err = firestoreClient.Collection("users").Doc(staticID).Delete(r.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
+		http.Error(w, "Failed to delete user", http.StatusInternalServerError)
 		fmt.Println(err)
 		return
 	}
 
-	err = authClient.DeleteUser(c.Request.Context(), staticID)
+	err = authClient.DeleteUser(r.Context(), staticID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user from authentication"})
+		http.Error(w, "Failed to delete user from authentication", http.StatusInternalServerError)
 		fmt.Println(err)
 		return
 	}
@@ -168,6 +169,6 @@ func deleteUser(c *gin.Context) {
 	response := map[string]string{
 		"message": "User deleted successfully",
 	}
-	c.Writer.Header().Set("Content-Type", "application/json")
-	c.JSON(http.StatusOK, response)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
 }

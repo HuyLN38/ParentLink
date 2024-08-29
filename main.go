@@ -1,27 +1,44 @@
 package main
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/handlers"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"os"
 )
+
+func CORSMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
+}
 
 func main() {
 	// Initialize Firebase
 	initFirebase()
 
 	// Create a new router
-	router := mux.NewRouter()
+	router := gin.Default()
+	router.Use(CORSMiddleware())
 
 	// Define routes
-	router.HandleFunc("/register", registerHandler).Methods("POST")
-	router.HandleFunc("/login", loginHandler).Methods("POST")
-	router.HandleFunc("/users/{staticID}/children", addChild).Methods("POST")
-	router.HandleFunc("/users/{staticID}/children", getChildren).Methods("GET")
-	router.HandleFunc("/users/{staticID}", deleteUser).Methods("DELETE")
-	router.HandleFunc("/changePassword", changePassword).Methods("POST")
+	router.POST("/register", registerHandler)
+	router.POST("/login", loginHandler)
+	router.POST("/users/:staticID/children", addChild)
+	router.GET("/users/:staticID/children", getChildren)
+	router.DELETE("/users/:staticID", deleteUser)
+	router.POST("/changePassword", changePassword)
 
 	// Configure CORS
 	corsHandler := handlers.CORS(
@@ -41,5 +58,5 @@ func main() {
 
 	// Start the server
 	log.Printf("Server is starting on port %s...", port)
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	log.Fatal(router.Run(":" + port))
 }

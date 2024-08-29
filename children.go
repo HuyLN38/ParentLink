@@ -1,8 +1,7 @@
 package main
 
 import (
-	"encoding/json"
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
@@ -11,30 +10,31 @@ type Child struct {
 	Location [2]float64 `json:"location"`
 }
 
-func addChild(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	staticID := params["staticID"]
+func addChild(c *gin.Context) {
+	staticID := c.Param("staticID")
 
 	var child Child
-	json.NewDecoder(r.Body).Decode(&child)
-
-	docRef := firestoreClient.Collection("users").Doc(staticID).Collection("children").NewDoc()
-	_, err := docRef.Set(r.Context(), child)
-	if err != nil {
-		http.Error(w, "Failed to add child", http.StatusInternalServerError)
+	if err := c.ShouldBindJSON(&child); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	json.NewEncoder(w).Encode(map[string]string{"status": "Child added successfully"})
+
+	docRef := firestoreClient.Collection("users").Doc(staticID).Collection("children").NewDoc()
+	_, err := docRef.Set(c.Request.Context(), child)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add child"})
+		return
+	}
+	c.JSON(http.StatusOK, map[string]string{"status": "Child added successfully"})
 }
 
-func getChildren(w http.ResponseWriter, r *http.Request) {
-	params := mux.Vars(r)
-	staticID := params["staticID"]
+func getChildren(c *gin.Context) {
+	staticID := c.Param("staticID")
 
 	children := []Child{}
-	docs, err := firestoreClient.Collection("users").Doc(staticID).Collection("children").Documents(r.Context()).GetAll()
+	docs, err := firestoreClient.Collection("users").Doc(staticID).Collection("children").Documents(c.Request.Context()).GetAll()
 	if err != nil {
-		http.Error(w, "Failed to fetch children", http.StatusInternalServerError)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch children"})
 		return
 	}
 
@@ -44,5 +44,5 @@ func getChildren(w http.ResponseWriter, r *http.Request) {
 		children = append(children, child)
 	}
 
-	json.NewEncoder(w).Encode(children)
+	c.JSON(http.StatusOK, children)
 }
