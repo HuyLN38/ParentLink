@@ -83,6 +83,30 @@ func loginHandler(c *gin.Context) {
 		return
 	}
 
+	// Extract LocalID from authResult
+	localID, ok := authResult["localId"].(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user ID"})
+		return
+	}
+
+	// Check if the user document exists
+	docRef := firestoreClient.Collection("users").Doc(localID)
+	doc, err := docRef.Get(c.Request.Context())
+
+	// If the document does not exist, create a new one
+	if !doc.Exists() {
+		user := map[string]interface{}{
+			"localId": localID,
+			"email":   req.Email,
+		}
+		_, err := docRef.Set(c.Request.Context(), user)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user document"})
+			return
+		}
+	}
+
 	response := authResult
 	c.Writer.Header().Set("Content-Type", "application/json")
 	c.JSON(http.StatusOK, response)
@@ -141,32 +165,54 @@ func changePassword(c *gin.Context) {
 }
 
 func deleteUser(c *gin.Context) {
-	staticID := c.Param("staticID")
+	id := c.Param("staticID")
 
-	fmt.Println("Deleting user")
-	_, err := firestoreClient.Collection("users").Doc(staticID).Get(c.Request.Context())
+	fmt.Println("Deleting user by ID:", id)
+	// Check if the user document exists in Firestore
+	docRef := firestoreClient.Collection("users").Doc(id)
+	_, err := docRef.Get(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		fmt.Println(err)
+		fmt.Println("User not found:", err)
 		return
 	}
 
-	_, err = firestoreClient.Collection(`users`).Doc(staticID).Delete(c.Request.Context())
+	// Delete all child documents associated with the user
+	childrenCollection := docRef.Collection("children")
+	docs, err := childrenCollection.Documents(c.Request.Context()).GetAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch children"})
+		fmt.Println("Failed to fetch children:", err)
+		return
+	}
+
+	for _, doc := range docs {
+		_, err := doc.Ref.Delete(c.Request.Context())
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete child"})
+			fmt.Println("Failed to delete child:", err)
+			return
+		}
+	}
+
+	// Delete the user document from Firestore
+	_, err = docRef.Delete(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user"})
-		fmt.Println(err)
+		fmt.Println("Failed to delete user:", err)
 		return
 	}
 
-	err = authClient.DeleteUser(c.Request.Context(), staticID)
+	// Delete the user from Firebase Authentication
+	err = authClient.DeleteUser(c.Request.Context(), id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete user from authentication"})
-		fmt.Println(err)
+		fmt.Println("Failed to delete user from authentication:", err)
 		return
 	}
 
 	response := map[string]string{
-		"message": "User deleted successfully",
+		"message": "User and all related data deleted successfully",
 	}
 	c.Writer.Header().Set("Content-Type", "application/json")
 	c.JSON(http.StatusOK, response)
