@@ -1,6 +1,7 @@
 package main
 
 import (
+	"TestAPI/firebase"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
@@ -23,21 +24,28 @@ func CORSMiddleware() gin.HandlerFunc {
 	}
 }
 
+//func testsendEmail(c *gin.Context) {
+//	err := sendEmail("lynhathuy38@gmail.com", "Test Subject", "This is the email body.")
+//	if err != nil {
+//		log.Fatalf("Failed to send email: %v", err)
+//	}
+//}
+
 func main() {
 	// Initialize Firebase
-	initFirebase()
+	firebase.initFirebase()
 
 	// Create a new router
 	router := gin.Default()
 	router.Use(CORSMiddleware())
-	router.POST("/register", registerHandler)
-	router.POST("/login", loginHandler)
-	router.POST("/users/:staticID/children", addChild)
-	router.GET("/users/:staticID/children", getChildren)
-	router.DELETE("/users/:staticID", deleteUser)
-	router.POST("/changePassword", changePassword)
-
+	router.POST("/register", firebase.registerHandler)
+	router.POST("/login", firebase.loginHandler)
+	router.POST("/users/:staticID/children", firebase.addChild)
+	router.GET("/users/:staticID/children", firebase.getChildren)
+	router.DELETE("/users/:staticID", firebase.deleteUser)
+	router.POST("/changePassword", firebase.changePassword)
 	router.GET("/hello-world", myGetFunction)
+	//router.POST("/sendEmail", testsendEmail)
 
 	port := os.Getenv("PORT")
 	if port == "" {

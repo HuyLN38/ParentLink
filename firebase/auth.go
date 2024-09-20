@@ -1,4 +1,4 @@
-package main
+package firebase
 
 import (
 	"bytes"
@@ -217,3 +217,27 @@ func deleteUser(c *gin.Context) {
 	c.Writer.Header().Set("Content-Type", "application/json")
 	c.JSON(http.StatusOK, response)
 }
+
+//func sendEmail(to string, subject string, body string) error {
+//	msg := []byte("From: " + "\r\n" +
+//		"To: " + to + "\r\n" +
+//		"Subject: " + subject + "\r\n" +
+//		"\r\n" + body)
+//
+//	message := &gmail.Message{
+//		Raw: base64.URLEncoding.EncodeToString(msg),
+//	}
+//
+//	// Send the message
+//	_, err := gmailService.Users.Messages.Send("me", message).Do()
+//	if err != nil {
+//		return fmt.Errorf("unable to send email: %v", err)
+//	}
+//
+//	return nil
+//}
+
+//err := sendEmail("recipient@example.com", "Test Subject", "This is the email body.")
+//if err != nil {
+//log.Fatalf("Failed to send email: %v", err)
+//}
