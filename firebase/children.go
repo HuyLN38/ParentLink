@@ -10,7 +10,7 @@ type Child struct {
 	Location [2]float64 `json:"location"`
 }
 
-func addChild(c *gin.Context) {
+func AddChild(c *gin.Context) {
 	staticID := c.Param("staticID")
 
 	var child Child
@@ -28,7 +28,7 @@ func addChild(c *gin.Context) {
 	c.JSON(http.StatusOK, map[string]string{"status": "Child added successfully"})
 }
 
-func getChildren(c *gin.Context) {
+func GetChildren(c *gin.Context) {
 	staticID := c.Param("staticID")
 
 	children := []Child{}

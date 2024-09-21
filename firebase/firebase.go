@@ -8,8 +8,6 @@ import (
 	"firebase.google.com/go/auth"
 	"fmt"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-	"google.golang.org/api/gmail/v1"
 	"google.golang.org/api/option"
 	"log"
 	"net/http"
@@ -19,7 +17,6 @@ import (
 var (
 	authClient      *auth.Client
 	firestoreClient *firestore.Client
-	gmailService    *gmail.Service
 )
 
 func getClient(config *oauth2.Config) *http.Client {
@@ -84,7 +81,7 @@ func getTokenFromFile(filePath string) (*oauth2.Token, error) {
 
 var config = &oauth2.Config{}
 
-func initFirebase() {
+func InitFirebase() {
 
 	ctx := context.Background()
 	opt := option.WithCredentialsFile("serviceAccountKey.json")
@@ -101,23 +98,6 @@ func initFirebase() {
 	firestoreClient, err = app.Firestore(ctx)
 	if err != nil {
 		log.Fatalf("error initializing firestore client: %v\n", err)
-	}
-
-	b, err := os.ReadFile("credentials.json")
-	if err != nil {
-		log.Fatalf("Unable to read client secret file: %v", err)
-	}
-
-	// If modifying these scopes, delete your previously saved token.json.
-	config, err := google.ConfigFromJSON(b, gmail.GmailReadonlyScope)
-	if err != nil {
-		log.Fatalf("Unable to parse client secret file to config: %v", err)
-	}
-	client := getClient(config)
-
-	gmailService, err = gmail.NewService(context.Background(), option.WithHTTPClient(client))
-	if err != nil {
-		log.Fatalf("Unable to retrieve Gmail client: %v", err)
 	}
 
 }

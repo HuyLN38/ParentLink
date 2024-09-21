@@ -27,7 +27,7 @@ type LoginRequest struct {
 	Password string `json:"password"`
 }
 
-func registerHandler(c *gin.Context) {
+func RegisterHandler(c *gin.Context) {
 	var req RegisterRequest
 	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
@@ -52,7 +52,7 @@ func registerHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func loginHandler(c *gin.Context) {
+func LoginHandler(c *gin.Context) {
 	var req LoginRequest
 	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
@@ -112,7 +112,7 @@ func loginHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func changePassword(c *gin.Context) {
+func ChangePassword(c *gin.Context) {
 	var req AuthPassword
 	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
@@ -164,7 +164,7 @@ func changePassword(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-func deleteUser(c *gin.Context) {
+func DeleteUser(c *gin.Context) {
 	id := c.Param("staticID")
 
 	fmt.Println("Deleting user by ID:", id)

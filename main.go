@@ -33,17 +33,17 @@ func CORSMiddleware() gin.HandlerFunc {
 
 func main() {
 	// Initialize Firebase
-	firebase.initFirebase()
+	firebase.InitFirebase()
 
 	// Create a new router
 	router := gin.Default()
 	router.Use(CORSMiddleware())
-	router.POST("/register", firebase.registerHandler)
-	router.POST("/login", firebase.loginHandler)
-	router.POST("/users/:staticID/children", firebase.addChild)
-	router.GET("/users/:staticID/children", firebase.getChildren)
-	router.DELETE("/users/:staticID", firebase.deleteUser)
-	router.POST("/changePassword", firebase.changePassword)
+	router.POST("/register", firebase.RegisterHandler)
+	router.POST("/login", firebase.LoginHandler)
+	router.POST("/users/:staticID/children", firebase.AddChild)
+	router.GET("/users/:staticID/children", firebase.GetChildren)
+	router.DELETE("/users/:staticID", firebase.DeleteUser)
+	router.POST("/changePassword", firebase.ChangePassword)
 	router.GET("/hello-world", myGetFunction)
 	//router.POST("/sendEmail", testsendEmail)
 
