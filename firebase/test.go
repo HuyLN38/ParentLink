@@ -1,4 +1,4 @@
-package main
+package firebase
 
 import (
 	"github.com/gin-gonic/gin"
@@ -7,7 +7,7 @@ import (
 	"net/smtp"
 )
 
-func send(c *gin.Context) {
+func Send(c *gin.Context) {
 	from := "vanphucprince@gmail.com"
 	pass := "ojlw acez nxdz pngu"
 	body := "Hello, I'm a fucking bot"
