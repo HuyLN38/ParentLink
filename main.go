@@ -45,6 +45,7 @@ func main() {
 	router.DELETE("/users/:staticID", firebase.DeleteUser)
 	router.POST("/changePassword", firebase.ChangePassword)
 	router.GET("/hello-world", myGetFunction)
+	router.GET("/test-gmail", send)
 	//router.POST("/sendEmail", testsendEmail)
 
 	port := os.Getenv("PORT")

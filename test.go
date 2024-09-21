@@ -1,17 +1,16 @@
 package main
 
 import (
+	"github.com/gin-gonic/gin"
 	"log"
+	"net/http"
 	"net/smtp"
 )
 
-func main() {
-	send("hello there")
-}
-
-func send(body string) {
+func send(c *gin.Context) {
 	from := "vanphucprince@gmail.com"
 	pass := "ojlw acez nxdz pngu"
+	body := "Hello, I'm a fucking bot"
 	to := "duynhu586@gmail.com"
 
 	msg := "From: " + "ParentLink" + "\n" +
@@ -25,8 +24,9 @@ func send(body string) {
 
 	if err != nil {
 		log.Printf("smtp error: %s", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	log.Print("sent, visit http://foobarbazz.mailinator.com")
+	c.JSON(http.StatusOK, map[string]string{"status": "Gmail sent successfully"})
 }
