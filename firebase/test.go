@@ -2,27 +2,31 @@ package firebase
 
 import (
 	"github.com/gin-gonic/gin"
+	"gopkg.in/gomail.v2"
 	"log"
 	"net/http"
-	"net/smtp"
 )
 
 func Send(c *gin.Context) {
-	from := "vanphucprince@gmail.com"
-	pass := "ojlw acez nxdz pngu"
-	body := "Hello, I'm a fucking bot"
-	to := "duynhu586@gmail.com"
+	m := gomail.NewMessage()
 
-	msg := "From: " + "ParentLink" + "\n" +
-		"To: " + to + "\n" +
-		"Subject: Register verification\n\n" +
-		body
+	// Set the sender's name and email
+	m.SetHeader("From", m.FormatAddress("vanphucprince@gmail.com", "ParentLink"))
 
-	err := smtp.SendMail("smtp.gmail.com:587",
-		smtp.PlainAuth("", from, pass, "smtp.gmail.com"),
-		from, []string{to}, []byte(msg))
+	// Set the recipient's email
+	m.SetHeader("To", "lynhathuy38@gmail.com")
 
-	if err != nil {
+	// Set the subject of the email
+	m.SetHeader("Subject", "Hello!")
+
+	// Set the body of the email
+	m.SetBody("text/html", "Hello <b>Kate</b> and <i>Noah</i>!")
+
+	// Create a new dialer with the SMTP server details
+	d := gomail.NewDialer("smtp.gmail.com", 587, "vanphucprince@gmail.com", "ojlw acez nxdz pngu")
+
+	// Send the email
+	if err := d.DialAndSend(m); err != nil {
 		log.Printf("smtp error: %s", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
