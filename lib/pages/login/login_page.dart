@@ -9,42 +9,35 @@ class LoginPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      // appBar: AppBar(
-      //   title: const Text("Login"),
-      // ),
       body: Center(
         child: SingleChildScrollView(
           child: Column(
             children: [
               //logo
-               Container(
-                width:350, 
-                height: 350, 
-                decoration:  BoxDecoration(
-                  color: Apptheme.colors.blue_50, 
-                  shape: BoxShape.circle, 
-                ),
-                child: Center(
-                    // Container for logo with shadow
-                    child: SvgPicture.asset(
-                      'lib/img/logo.svg',
-                      height: 200, 
-                    ),
+               Padding(
+                 padding: const EdgeInsets.symmetric(vertical: 15.0),
+                 child: Container(
+                  width:350, 
+                  height: 350, 
+                  decoration:  BoxDecoration(
+                    color: Apptheme.colors.blue_50, 
+                    shape: BoxShape.circle, 
                   ),
-              ),
+                  child: Center(
+                      // Container for logo with shadow
+                      child: SvgPicture.asset(
+                        'lib/img/logo.svg',
+                        height: 200, 
+                      ),
+                    ),
+                               ),
+               ),
           
               //container login
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 25), 
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.24),
-                      offset: const Offset(0, 3),
-                      blurRadius: 8, 
-                    ),
-                  ],
                 ),
                 child: Container(
                   padding: const EdgeInsets.all(32),

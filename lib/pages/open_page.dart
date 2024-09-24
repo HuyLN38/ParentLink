@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:animator/animator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parent_link/components/button_open_page.dart';
@@ -10,46 +11,60 @@ class OpenPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // double w = MediaQuery.of(context).size.width;
     return Scaffold(
       backgroundColor: Apptheme.colors.blue_50,
-      body: Center( 
-        child: Column(
-          children: [
-            //logo
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 100.0),
-              child: Container(
-                decoration:const BoxDecoration(
-                  boxShadow: [
-                  BoxShadow(
-                    color: Color.fromRGBO(50, 50, 93, 0.25),
-                    offset: Offset(0, 50),
-                    blurRadius: 100, 
-                    spreadRadius: -20, 
-                  ),
-                  BoxShadow(
-                    color: Color.fromRGBO(0, 0, 0, 0.3),
-                    offset: Offset(0, 30), 
-                    blurRadius: 60, 
-                    spreadRadius: -30, 
-                  ),
-                  ]
-                ),
-                child: SvgPicture.asset(
-                  'lib/img/logo.svg',
-                  height: 300,
+      body: SingleChildScrollView(
+        child: Center( 
+          child: Column(
+            children: [
+              //logo
+           Padding(
+             padding: const EdgeInsets.symmetric(vertical: 50.0),
+             child: Container(
+              height: 320,
+              width: 320,
+              child: Animator<double>(
+                duration: Duration(milliseconds: 2000),
+                cycles: 0,
+                curve: Curves.easeInOut,
+                tween: Tween<double>(begin: 0.0, end: 10.0),
+                builder: (context, animatorState, child) => Column(
+                  children: [
+                    SizedBox(
+                      height: animatorState.value * 2,
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          // BoxShadow(
+                          //   color: Apptheme.colors.gray_light,
+                          //   blurRadius: 20,
+                          //   offset: Offset(0, 5),
+                          // ),
+                        ],
+                      ),
+                     child: SvgPicture.asset(
+                          'lib/img/logo.svg',
+                          height: 250, 
+                        ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-
-            //parent button
-            ButtonOpenPage(onTap: () => Navigator.pushNamed(context, '/login_page'), text: 'Parent'),
-
-            const SizedBox(height: 25,),
-
-          //child button
-           ButtonOpenPage(onTap: () => {}, text: 'Children'),
-          ],
+                       ),
+           ),
+        
+              //parent button
+              ButtonOpenPage(onTap: () => Navigator.pushNamed(context, '/login_page'), text: 'Parent'),
+        
+              const SizedBox(height: 25,),
+        
+            //child button
+             ButtonOpenPage(onTap: () => {}, text: 'Children'),
+            ],
+          ),
         ),
       ),
     );
