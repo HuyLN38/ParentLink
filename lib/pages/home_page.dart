@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:parent_link/components/child_state_tile.dart';
 import 'package:parent_link/theme/app.theme.dart';
 
 class HomePage extends StatefulWidget {
@@ -9,7 +10,6 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  bool _isNotified = false;
 
   @override
   Widget build(BuildContext context) {
@@ -39,20 +39,14 @@ class _HomePageState extends State<HomePage> {
                       child: const Text("Add a child"),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      // handle notification activity
-                      setState(() {
-                        _isNotified = !_isNotified; 
-                      });
-                    },
-                    child: Icon(
-                      _isNotified
-                          ? Icons.notifications
-                          : Icons.notifications_none, 
-                      size: 36.0,
+
+                     IconButton(
+                      icon: Icon(Icons.notifications),
+                      onPressed: (){
+                        //do sth acitivity
+                      },
+                      iconSize: 36.0,
                     ),
-                  ),
                 ],
               ),
             ),
@@ -83,6 +77,21 @@ class _HomePageState extends State<HomePage> {
                 )
                 ),
               ),
+            ),
+            Container(
+              child: ChildStateTile(),
+            ),
+            Container(
+              child: ChildStateTile(),
+            ),
+          Container(
+              child: ChildStateTile(),
+            ),
+          Container(
+              child: ChildStateTile(),
+            ),
+          Container(
+              child: ChildStateTile(),
             ),
           ],
         ),

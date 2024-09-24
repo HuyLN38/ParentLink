@@ -10,7 +10,8 @@ class AppColors{
   final blue = const Color(0xFF4A90E2);
   final orage = const Color(0xFFFFA726);
   final red = const Color(0xFFF44336);
-  final geen = const Color(0xFF4CAF50);
+  final green = const Color(0xFF4CAF50);
+  final pale_blue = const Color(0xFFDBEDEA );
 
 const AppColors();
 }
