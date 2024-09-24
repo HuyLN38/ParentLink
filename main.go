@@ -43,10 +43,14 @@ func main() {
 	router.POST("/users/:staticID/children", firebase.AddChild)
 	router.GET("/users/:staticID/children", firebase.GetChildren)
 	router.DELETE("/users/:staticID", firebase.DeleteUser)
-	router.POST("/changePassword", firebase.ChangePassword)
+	router.POST("/changePassword/", firebase.ChangePassword)
 	router.GET("/hello-world", myGetFunction)
-	router.GET("/test-gmail", firebase.Send)
-	//router.POST("/sendEmail", testsendEmail)
+	router.GET("/register/:otp", firebase.ValidateOTP)
+	router.GET("/send", func(c *gin.Context) {
+		email := "iloveTokuda@gmail.com"
+		code := "696969"
+		firebase.Send(c, email, code)
+	})
 
 	port := os.Getenv("PORT")
 	if port == "" {

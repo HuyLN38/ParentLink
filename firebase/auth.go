@@ -3,12 +3,14 @@ package firebase
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/json"
 	"firebase.google.com/go/auth"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+	"time"
 )
 
 type AuthPassword struct {
@@ -17,43 +19,93 @@ type AuthPassword struct {
 	NewPassword string `json:"NewPassword"`
 }
 
-type RegisterRequest struct {
+type AccountRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+type OTPValidationRequest struct {
+	OTP string `json:"otp"`
+}
+
+func generateOTP() (string, error) {
+	b := make([]byte, 3)
+	_, err := rand.Read(b)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%06d", b[0]<<16|b[1]<<8|b[2]), nil
 }
 
 func RegisterHandler(c *gin.Context) {
-	var req RegisterRequest
+	var req AccountRequest
 	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 
+	otp, err := generateOTP()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate OTP"})
+		return
+	}
+
+	docRef := firestoreClient.Collection("Registration").Doc(otp)
+	_, err = docRef.Set(context.Background(), map[string]interface{}{
+		"email":    req.Email,
+		"password": req.Password,
+		"created":  time.Now(),
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store OTP"})
+		return
+	} else {
+		Send(c, req.Email, otp)
+	}
+
+	// Set a timer to delete the document after 5 minutes
+	go func() {
+		time.Sleep(5 * time.Minute)
+		docRef.Delete(context.Background())
+	}()
+
+	c.JSON(http.StatusOK, gin.H{"otp": otp})
+}
+
+func ValidateOTP(c *gin.Context) {
+	OTP := c.Param("otp")
+
+	docRef := firestoreClient.Collection("Registration").Doc(OTP)
+	doc, err := docRef.Get(context.Background())
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid OTP"})
+		return
+	}
+
+	data := doc.Data()
+	email := data["email"].(string)
+	password := data["password"].(string)
+
 	params := (&auth.UserToCreate{}).
-		Email(req.Email).
-		Password(req.Password)
+		Email(email).
+		Password(password)
 
 	u, err := authClient.CreateUser(context.Background(), params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
-		fmt.Println(err)
 		return
 	}
 
-	response := map[string]string{
-		"uid": u.UID,
+	_, err = docRef.Delete(context.Background())
+	if err != nil {
+		return
 	}
-	c.Writer.Header().Set("Content-Type", "application/json")
-	c.JSON(http.StatusOK, response)
+
+	c.JSON(http.StatusOK, gin.H{"uid": u.UID})
 }
 
 func LoginHandler(c *gin.Context) {
-	var req LoginRequest
+	var req AccountRequest
 	if err := json.NewDecoder(c.Request.Body).Decode(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
