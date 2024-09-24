@@ -9,52 +9,51 @@ class ForgetPasswordPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              //logo
-               Container(
-                width:350, 
-                height: 350, 
-                decoration:  BoxDecoration(
-                  color: Apptheme.colors.blue_50, 
-                  shape: BoxShape.circle, 
-                ),
-                child: Center(
-                    // Container for logo with shadow
-                    child: SvgPicture.asset(
-                      'lib/img/logo.svg',
-                      height: 200, 
-                    ),
-                  ),
+      body: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          // Logo at the top of the screen
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 15.0), 
+            child: Container(
+              width: 350, 
+              height: 350,
+              decoration: BoxDecoration(
+                color: Apptheme.colors.blue_50,
+                shape: BoxShape.circle,
               ),
+              child: Center(
+                child: SvgPicture.asset(
+                  'lib/img/logo.svg',
+                  height: 200, 
+                ),
+              ),
+            ),
+          ),
           
-              //container login
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 25), 
+          // Space between logo and form
+          const SizedBox(height: 40),
+
+          // Scrollable form
+          Expanded(
+            child: SingleChildScrollView(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 25),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.24),
-                      offset: const Offset(0, 3),
-                      blurRadius: 8, 
-                    ),
-                  ],
                 ),
                 child: Container(
                   padding: const EdgeInsets.all(32),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(24),
-                    color: Colors.white, 
+                    color: Colors.white,
                     border: Border.all(
                       color: Apptheme.colors.gray_light,
                       width: 1,
                     ),
                   ),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min, 
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       const TextField(
                         decoration: InputDecoration(
@@ -64,10 +63,10 @@ class ForgetPasswordPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 16.0),
 
-                        Text(
-                        "No User Found ",
+                      Text(
+                        "No User Found",
                         style: TextStyle(color: Apptheme.colors.red),
-                        ),
+                      ),
 
                       const SizedBox(height: 16.0),
 
@@ -99,9 +98,9 @@ class ForgetPasswordPage extends StatelessWidget {
                   ),
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
