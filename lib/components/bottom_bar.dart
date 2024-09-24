@@ -15,33 +15,38 @@ class BottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
-      currentIndex: currentIndex,
-      onTap: onTap,
-      backgroundColor: Apptheme.colors.white,
-      selectedItemColor: Apptheme.colors.blue,
-      unselectedItemColor: Colors.grey,
-      items: const [
-        BottomNavigationBarItem(
-          icon: Icon(IconlyLight.home),
-          activeIcon: Icon(IconlyBold.home),
-          label: 'Home',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(IconlyLight.calendar),
-          activeIcon: Icon(IconlyBold.calendar),
-          label: 'Schedule',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(IconlyLight.message),
-          activeIcon: Icon(IconlyBold.message),
-          label: 'Messages',
-        ),
-        BottomNavigationBarItem(
-          icon: Icon(IconlyLight.profile),
-          activeIcon: Icon(IconlyBold.profile),
-          label: 'Profile',
-        ),
-      ],
-    );
+      type: BottomNavigationBarType.fixed,
+        currentIndex: currentIndex,
+        onTap: onTap,
+        backgroundColor: Colors.white,
+        selectedItemColor: Apptheme.colors.blue,
+        unselectedItemColor: Colors.grey,
+        // elevation: 0,
+        // Add these properties to hide the labels
+         showSelectedLabels: false,
+         showUnselectedLabels: false,    
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(IconlyLight.home),
+            activeIcon: Icon(IconlyBold.home),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(IconlyLight.calendar),
+            activeIcon: Icon(IconlyBold.calendar),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(IconlyLight.message),
+            activeIcon: Icon(IconlyBold.message),
+            label: '',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(IconlyLight.profile),
+            activeIcon: Icon(IconlyBold.profile),
+            label: '',
+          ),
+        ],
+      );
   }
 }

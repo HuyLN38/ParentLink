@@ -20,7 +20,7 @@ class _MainPageState extends State<MainPage> {
   
   // this method will update our selected index
   // when the user tags on the bottom bar
-  void navigateBottome(int index){
+  void navigateBottom(int index){
     setState(() {
       _selectedIndex = index;
     });
@@ -44,7 +44,7 @@ final List<Widget> _page =[
       backgroundColor: Colors.white,
       bottomNavigationBar: BottomBar(
       currentIndex: _selectedIndex,
-      onTap: navigateBottome,
+      onTap: navigateBottom,
     ),
 
       body: _page[_selectedIndex],
