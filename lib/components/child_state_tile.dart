@@ -12,15 +12,13 @@ class ChildStateTile extends StatelessWidget {
     List <Color>  backgroundColor = [
       const Color(0xffD6EBE8),
       const Color(0xffDCEEEB),
-      const Color(0xffFCA92D),
-      const Color(0xffFAC472),
       const Color(0xffE5E6ED),
       const Color(0xffEBF0F5),
-      // const Color(0xfff292ed),
-      // const Color(0xfff36364),
+      const Color(0xffFAC472),
+      const Color(0xffFCA92D),
     ];
-    Color background1 = backgroundColor[index % backgroundColor.length];
-    Color background2= backgroundColor[index % backgroundColor.length +1];
+  Color background1 = backgroundColor[index % backgroundColor.length];
+  Color background2 = backgroundColor[(index + 1) % backgroundColor.length];
 
     return Positioned(
      top: (150 * index).toDouble(),
