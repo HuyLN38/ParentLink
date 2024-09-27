@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:parent_link/components/button_login_page.dart';
 import 'package:parent_link/theme/app.theme.dart';
 
 class RegisterPage extends StatelessWidget {
@@ -75,30 +76,9 @@ class RegisterPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 16.0),
+
                       // Login button
-                      GestureDetector(
-                        onTap: () {
-                          // Handle login action
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Apptheme.colors.blue_50,
-                            border: Border.all(
-                              color: Apptheme.colors.black,
-                              width: 1,
-                            ),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'Register',
-                              style: TextStyle(color: Colors.black, fontSize: 16),
-                            ),
-                          ),
-                        ),
-                      ),
+                     ButtonLoginPage(onPressed: (){}, text: 'Login', color: null,),
                       const SizedBox(height: 8.0),
                       Divider(
                         color: Apptheme.colors.gray,
@@ -106,38 +86,9 @@ class RegisterPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 8.0),
                       // Login with Google
-                      GestureDetector(
-                        onTap: () {
-                          // Handle login action
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Apptheme.colors.white,
-                            border: Border.all(
-                              color: Apptheme.colors.black,
-                              width: 1,
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                                child: SvgPicture.asset(
-                                  'lib/img/goggle.svg',
-                                  height: 24,
-                                ),
-                              ),
-                              const Text(
-                                'Register with Google',
-                                style: TextStyle(color: Colors.black, fontSize: 16),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                     ButtonLoginPage(onPressed: (){}, text: 'Continue with Google', color: Apptheme.colors.white,),
+
+
                     ],
                   ),
                 ),

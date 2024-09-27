@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:parent_link/components/button_login_page.dart';
 import 'package:parent_link/theme/app.theme.dart';
 
 class ForgetPasswordPage extends StatelessWidget {
@@ -71,29 +72,7 @@ class ForgetPasswordPage extends StatelessWidget {
                       const SizedBox(height: 16.0),
 
                       // Submit button
-                      GestureDetector(
-                        onTap: () {
-                          // Handle Submit action
-                        },
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(8),
-                            color: Apptheme.colors.blue_50,
-                            border: Border.all(
-                              color: Apptheme.colors.black,
-                              width: 1,
-                            ),
-                          ),
-                          child: const Center(
-                            child: Text(
-                              'Submit',
-                              style: TextStyle(color: Colors.black, fontSize: 16),
-                            ),
-                          ),
-                        ),
-                      ),
+                     ButtonLoginPage(onPressed: (){}, text: 'Submit', color: null,),
                     ],
                   ),
                 ),

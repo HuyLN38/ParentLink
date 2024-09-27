@@ -23,25 +23,32 @@ class _HomePageState extends State<HomePage> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  GestureDetector(
-                    onTap: () {
-                      // add child activity
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: Apptheme.colors.black,
-                          width: 1,
-                        ),
+                ElevatedButton(
+                  onPressed: () {
+                    // Add child activity
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+                    backgroundColor: Apptheme.colors.white, 
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      side: BorderSide(
+                        color: Apptheme.colors.black,
+                        width: 1,
                       ),
-                      child: const Text("Add a child"),
                     ),
                   ),
+                  child: const Text(
+                    "Add a child",
+                    style: TextStyle(
+                      color: Colors.black, // Text color
+                    ),
+                  ),
+                ),
+
 
                      IconButton(
-                      icon: Icon(Icons.notifications),
+                      icon: const Icon(Icons.notifications),
                       onPressed: (){
                         //do sth acitivity
                       },
