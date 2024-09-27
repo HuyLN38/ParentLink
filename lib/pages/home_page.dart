@@ -92,15 +92,16 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
-            Expanded(
-              child: ListView.builder(
-                scrollDirection: Axis.vertical,
-                itemCount: childStateList.length,
-                itemBuilder: (context, index) {
-                  final childeState = childStateList[index];
-                  return ChildStateTile(childState: childeState, index: index,);
-                })
-            )
+            const SizedBox(height: 8,),
+
+        Expanded(
+          child: Stack(
+            children: List.generate(childStateList.length, (index) {
+              final childState = childStateList[index];
+              return ChildStateTile(childState: childState, index: index);
+            }),
+          ),
+        ),
 
 
           ],

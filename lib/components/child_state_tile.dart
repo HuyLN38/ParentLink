@@ -9,17 +9,44 @@ class ChildStateTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2.0),
+    List <Color>  backgroundColor = [
+      const Color(0xffD6EBE8),
+      const Color(0xffDCEEEB),
+      const Color(0xffFCA92D),
+      const Color(0xffFAC472),
+      const Color(0xffE5E6ED),
+      const Color(0xffEBF0F5),
+      // const Color(0xfff292ed),
+      // const Color(0xfff36364),
+    ];
+    Color background1 = backgroundColor[index % backgroundColor.length];
+    Color background2= backgroundColor[index % backgroundColor.length +1];
+
+    return Positioned(
+     top: (150 * index).toDouble(),
+     left: 0,
+     right: 0,
       child: Container(
         decoration: BoxDecoration(
-          color: Apptheme.colors.pale_blue,
-          borderRadius: BorderRadius.circular(18)
+        gradient:  LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          stops: [0.0, 0.01],
+          colors: [
+            background1,
+            background2
+          ],
+),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: Apptheme.colors.white,
+            width: 1
+          )
         ),
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.only(left: 20.0, top: 30, bottom: 30),
+              padding: const EdgeInsets.only(left: 20.0, top: 30, bottom: 50),
               child: Row(
                 children: [
                   // Avatar with circular border
@@ -37,6 +64,7 @@ class ChildStateTile extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 35), // Use SizedBox for spacing
+
                   // Child's info
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,7 +78,7 @@ class ChildStateTile extends StatelessWidget {
                         childState.activity,
                         style: const TextStyle(fontSize: 16),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 10),
               
                       // Status indicators
                       Row(
