@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:parent_link/components/child_state_tile.dart';
+import 'package:parent_link/model/child_state.dart';
+import 'package:parent_link/model/control_child_state.dart';
 import 'package:parent_link/theme/app.theme.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -13,10 +16,13 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    //access child' state list 
+    final childStateList = context.watch<ControlChildState>().childList;
+
+    return
+    Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
+      body:Column(
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 40),
@@ -85,24 +91,20 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-            Container(
-              child: ChildStateTile(),
-            ),
-            Container(
-              child: ChildStateTile(),
-            ),
-          Container(
-              child: ChildStateTile(),
-            ),
-          Container(
-              child: ChildStateTile(),
-            ),
-          Container(
-              child: ChildStateTile(),
-            ),
+
+            Expanded(
+              child: ListView.builder(
+                scrollDirection: Axis.vertical,
+                itemCount: childStateList.length,
+                itemBuilder: (context, index) {
+                  final childeState = childStateList[index];
+                  return ChildStateTile(childState: childeState, index: index,);
+                })
+            )
+
+
           ],
         ),
-      ),
     );
   }
 }

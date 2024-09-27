@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:parent_link/model/child_state.dart';
 import 'package:parent_link/theme/app.theme.dart';
 
 class ChildStateTile extends StatelessWidget {
-  const ChildStateTile({super.key});
+  final ChildState childState;
+  final int index;
+  ChildStateTile({super.key, required this.childState, required this.index});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +19,7 @@ class ChildStateTile extends StatelessWidget {
         child: Stack(
           children: [
             Padding(
-              padding: const EdgeInsets.only(left: 20.0, top: 20, bottom: 20),
+              padding: const EdgeInsets.only(left: 20.0, top: 30, bottom: 30),
               child: Row(
                 children: [
                   // Avatar with circular border
@@ -28,9 +31,9 @@ class ChildStateTile extends StatelessWidget {
                       ),
                       shape: BoxShape.circle,
                     ),
-                    child: const CircleAvatar(
+                    child: CircleAvatar(
                       radius: 35,
-                      backgroundImage: AssetImage('lib/img/child1.png'),
+                      backgroundImage: AssetImage(childState.image,),
                     ),
                   ),
                   const SizedBox(width: 35), // Use SizedBox for spacing
@@ -38,14 +41,14 @@ class ChildStateTile extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        "Lesilie",
-                        style: TextStyle(fontSize: 20),
+                      Text(
+                        childState.name,
+                        style: const TextStyle(fontSize: 20),
                       ),
                       const SizedBox(height: 2),
-                      const Text(
-                        "On the math lesson",
-                        style: TextStyle(fontSize: 16),
+                       Text(
+                        childState.activity,
+                        style: const TextStyle(fontSize: 16),
                       ),
                       const SizedBox(height: 4),
               
@@ -55,16 +58,16 @@ class ChildStateTile extends StatelessWidget {
                         children: [
                           _buildStatusContainer(
                             icon: Icons.turn_right,
-                            text: "652m",
+                            text: "${childState.distance}m",
                           ),
                           const SizedBox(width: 8),
                           _buildStatusContainer(
-                            icon: Icons.battery_3_bar_sharp,
-                            text: "50%",
+                            icon: _getBatteryIcon(childState.battery),                          
+                            text: "${childState.battery}%",
                           ),
                           const SizedBox(width: 8),
                           _buildStatusContainer(
-                            text: "Idle",
+                            text: childState.state,
                           ),
                         ],
                       ),
@@ -76,7 +79,7 @@ class ChildStateTile extends StatelessWidget {
             Align(
               alignment: Alignment.topRight,
               child: IconButton(
-                icon: Icon(Icons.more_horiz),
+                icon: const Icon(Icons.more_horiz),
                 onPressed: () {
                 },
               ),
@@ -109,5 +112,26 @@ class ChildStateTile extends StatelessWidget {
         ),
       ),
     );
+  }
+
+    // Helper method to get battery icon based on battery percentage
+  IconData _getBatteryIcon(int battery) {
+    if (battery >= 90) {
+      return Icons.battery_full;
+    } else if (battery >= 80) {
+      return Icons.battery_6_bar;
+    } else if (battery >= 60) {
+      return Icons.battery_5_bar;
+    } else if (battery >= 40) {
+      return Icons.battery_4_bar;
+    } else if (battery >= 30) {
+      return Icons.battery_3_bar;
+    } else if (battery >= 20) {
+      return Icons.battery_2_bar;
+    } else if (battery >= 10) {
+      return Icons.battery_1_bar;
+    } else {
+      return Icons.battery_0_bar;
+    }
   }
 }

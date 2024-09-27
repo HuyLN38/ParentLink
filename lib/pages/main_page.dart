@@ -4,7 +4,6 @@ import 'package:parent_link/pages/home_page.dart';
 import 'package:parent_link/pages/message_page.dart';
 import 'package:parent_link/pages/profile_page.dart';
 import 'package:parent_link/pages/schedule_page.dart';
-import 'package:parent_link/theme/app.theme.dart';
 
 
 class MainPage extends StatefulWidget {

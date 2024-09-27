@@ -1,4 +1,3 @@
-import 'dart:ui';
 
 import 'package:animator/animator.dart';
 import 'package:flutter/material.dart';
