@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:parent_link/components/bottom_bar.dart';
-import 'package:parent_link/pages/home_page.dart';
+import 'package:parent_link/pages/home/home_page.dart';
 import 'package:parent_link/pages/message_page.dart';
 import 'package:parent_link/pages/profile_page.dart';
 import 'package:parent_link/pages/schedule_page.dart';

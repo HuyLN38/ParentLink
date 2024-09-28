@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:parent_link/components/child_state_tile.dart';
-import 'package:parent_link/model/control_child_state.dart';
+import 'package:parent_link/builder/child_state_tile.dart';
+import 'package:parent_link/model/control/control_child_state.dart';
 import 'package:parent_link/theme/app.theme.dart';
 import 'package:provider/provider.dart';
 
@@ -16,12 +16,12 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     //access child' state list 
-    final childStateList = context.watch<ControlChildState>().childList;
+    final childStateList = context.watch<ControlChildState>().getlistChild;
 
     return
     Scaffold(
       backgroundColor: Colors.white,
-      body:SingleChildScrollView(
+      body: SingleChildScrollView(
         child: Column(
             children: [
               Padding(
@@ -96,8 +96,10 @@ class _HomePageState extends State<HomePage> {
         
              Stack(
               children:[
-                Container(
-                  height: childStateList.length* 150,
+                SingleChildScrollView(
+                  child: Container(
+                    height: childStateList.length* 150,
+                  ),
                 ),
                  ...List.generate(childStateList.length, (index) {
                 final childState = childStateList[index];
@@ -105,8 +107,6 @@ class _HomePageState extends State<HomePage> {
               }),
               ]
             ),
-        
-        
             ],
           ),
       ),
