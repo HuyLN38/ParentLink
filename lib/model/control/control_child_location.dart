@@ -7,10 +7,10 @@ class ControlChildLocation extends ChangeNotifier{
     ChildLocation('School', '8:00','12:00', 'null' ),
     ChildLocation('On Road', '7:00' ,' 7:30', 'null'),
     ChildLocation('Home', '0:00' ,' 7:30', 'null'),
-        ChildLocation('School', '8:00','12:00', 'null' ),
+    ChildLocation('School', '8:00','12:00', 'null' ),
     ChildLocation('On Road', '7:00' ,' 7:30', 'null'),
     ChildLocation('Home', '0:00' ,' 7:30', 'null'),
-        ChildLocation('School', '8:00','12:00', 'null' ),
+    ChildLocation('School', '8:00','12:00', 'null' ),
     ChildLocation('On Road', '7:00' ,' 7:30', 'null'),
     ChildLocation('Home', '0:00' ,' 7:30', 'null'),
   ];

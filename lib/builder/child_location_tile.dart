@@ -26,7 +26,7 @@ class ChildLocationTile extends StatelessWidget {
         ),
         
       ],
-      color: childLocation.active == 'null' ? Apptheme.colors.gray_light: Apptheme.colors.white,
+      color: childLocation.active == 'null' ? Apptheme.colors.pale_blue.withOpacity(0.3): Apptheme.colors.white,
         borderRadius: BorderRadius.circular(8)
       ),
       child: Row(
@@ -37,10 +37,10 @@ class ChildLocationTile extends StatelessWidget {
               // Icon location
               Container(
                 decoration: BoxDecoration(
-                  color: childLocation.active == 'null' ? Apptheme.colors.gray:Apptheme.colors.white,
+                  color: childLocation.active == 'null' ? Apptheme.colors.gray_light:Apptheme.colors.white,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: childLocation.active == 'null' ? Apptheme.colors.gray:Apptheme.colors.orage, 
+                    color: childLocation.active == 'null' ? Apptheme.colors.gray_light:Apptheme.colors.orage, 
                     width: 1,
                   ),
                 ),
@@ -58,7 +58,7 @@ class ChildLocationTile extends StatelessWidget {
                   Text(
                     childLocation.location,
                     style: TextStyle(
-                      color: childLocation.active == 'null' ? Apptheme.colors.gray: Apptheme.colors.black,
+                      color: childLocation.active == 'null' ? Apptheme.colors.gray : Apptheme.colors.black,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -68,7 +68,7 @@ class ChildLocationTile extends StatelessWidget {
                     '${childLocation.timeStart} - ${childLocation.active == 'null' ? childLocation.timeEnd : childLocation.active}',
                     style: TextStyle(
                       fontSize: 16,
-                      color: childLocation.active == 'null' ?Apptheme.colors.black: Apptheme.colors.gray,
+                      color: Apptheme.colors.gray,
                     ),
                   ),
                 ],

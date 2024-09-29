@@ -220,14 +220,10 @@ class LocationPage extends StatelessWidget {
                         ),
                       ),
                     )
-
                   ],
                 )
               )
-
-
         ],
-
       ),
     );
   }
