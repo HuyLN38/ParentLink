@@ -77,8 +77,8 @@ class RegisterPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 16.0),
 
-                      // Login button
-                     ButtonLoginPage(onPressed: (){}, text: 'Login', color: null,),
+                      // Register button
+                     ButtonLoginPage(onPressed: (){Navigator.pushNamed(context, '/f2p_page');}, text: 'Register', color: null,),
                       const SizedBox(height: 8.0),
                       Divider(
                         color: Apptheme.colors.gray,

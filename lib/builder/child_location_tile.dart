@@ -10,7 +10,7 @@ class ChildLocationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
-      padding: const EdgeInsets.all(12),
+      padding: childLocation.active == 'null' ? const EdgeInsets.all(12) : const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
         border: Border.all(
           color: childLocation.active != 'null' ? Apptheme.colors.black.withOpacity(0.3) : Colors.transparent,
@@ -59,7 +59,7 @@ class ChildLocationTile extends StatelessWidget {
                     childLocation.location,
                     style: TextStyle(
                       color: childLocation.active == 'null' ? Apptheme.colors.gray : Apptheme.colors.black,
-                      fontSize: 16,
+                      fontSize: childLocation.active == 'null' ? 16 : 18,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -67,7 +67,7 @@ class ChildLocationTile extends StatelessWidget {
                   Text(
                     '${childLocation.timeStart} - ${childLocation.active == 'null' ? childLocation.timeEnd : childLocation.active}',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: childLocation.active == 'null' ? 16 : 18,
                       color: Apptheme.colors.gray,
                     ),
                   ),

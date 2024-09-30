@@ -72,7 +72,9 @@ class ForgetPasswordPage extends StatelessWidget {
                       const SizedBox(height: 16.0),
 
                       // Submit button
-                     ButtonLoginPage(onPressed: (){}, text: 'Submit', color: null,),
+                     ButtonLoginPage(onPressed: (){
+                      Navigator.pushNamed(context, '/send_mail_page');
+                     }, text: 'Submit', color: null,),
                     ],
                   ),
                 ),
