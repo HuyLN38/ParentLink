@@ -7,7 +7,7 @@ class SchedulePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: const Center(
-        child: Text("Schedule Page"),
+        child: Text("Map Page"),
       ),
     );
   }

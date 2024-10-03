@@ -32,8 +32,8 @@ class BottomBar extends StatelessWidget {
             label: '',
           ),
           BottomNavigationBarItem(
-            icon: Icon(IconlyLight.calendar),
-            activeIcon: Icon(IconlyBold.calendar),
+            icon: Icon(IconlyLight.location),
+            activeIcon: Icon(IconlyBold.location),
             label: '',
           ),
           BottomNavigationBarItem(

@@ -38,6 +38,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
 
+          //avatar
           Positioned(
             top: 85,
             left: 8,
@@ -105,7 +106,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ],
                       ),
                       const SizedBox(height: 22),
-                      _settingItem(() {}, "Edit profile",
+                      _settingItem(() {Navigator.of(context).pushNamed('/edit_profile_page');}, "Edit profile",
                           Icon(Icons.arrow_forward_ios, size: 20, color: Apptheme.colors.gray)),
                       const SizedBox(height: 22),
                       _settingItem(() {}, "Change password",
@@ -113,13 +114,15 @@ class _ProfilePageState extends State<ProfilePage> {
                       const SizedBox(height: 22),
                       _settingItem(() {}, "Add a payment method",
                           Icon(Icons.add, size: 25, color: Apptheme.colors.gray)),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 22),
                   
                       _settingItemOnOff("Push notification", isPushNotif, (value) {
                         setState(() {
                           isPushNotif = value;
                         });
                       }),
+                      const SizedBox(height: 22),
+
                       _settingItemOnOff("Data save mode", isDataSave, (value) {
                         setState(() {
                           isDataSave = value; 
@@ -148,28 +151,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       const SizedBox(height: 22),
                       _settingItem(() {}, "Terms and conditions",
                         Icon(Icons.arrow_forward_ios, size: 20, color: Apptheme.colors.gray)),
-
-
-                    // test scrolling
-                                              const SizedBox(height: 22),
-                      _settingItem(() {}, "About us",
-                        Icon(Icons.arrow_forward_ios, size: 20, color: Apptheme.colors.gray)),
-                      const SizedBox(height: 22),
-                      _settingItem(() {}, "Privacy policy",
-                        Icon(Icons.arrow_forward_ios, size: 20, color: Apptheme.colors.gray)),
-                      const SizedBox(height: 22),
-                      _settingItem(() {}, "Terms and conditions",
-                        Icon(Icons.arrow_forward_ios, size: 20, color: Apptheme.colors.gray)),
-
-                                                                      const SizedBox(height: 22),
-                      _settingItem(() {}, "About us",
-                        Icon(Icons.arrow_forward_ios, size: 20, color: Apptheme.colors.gray)),
-                      const SizedBox(height: 22),
-                      _settingItem(() {}, "Privacy policy",
-                        Icon(Icons.arrow_forward_ios, size: 20, color: Apptheme.colors.gray)),
-                      const SizedBox(height: 22),
-                      _settingItem(() {}, "Terms and conditions",
-                        Icon(Icons.arrow_forward_ios, size: 20, color: Apptheme.colors.gray)),
                     ],
                   ),
                 ),
@@ -181,36 +162,66 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Setting item
-  Widget _settingItem(VoidCallback ontap, String text, Icon icon) {
-    return GestureDetector(
-      onTap: ontap,
+// Setting item
+Widget _settingItem(VoidCallback ontap, String text, Icon icon) {
+  return SizedBox(
+    width: double.infinity, 
+    child: ElevatedButton(
+      onPressed: ontap,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white, 
+        elevation: 0, 
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero, 
+          side: BorderSide.none, 
+        ),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             text,
+            textAlign: TextAlign.start,
             style: TextStyle(
               fontSize: 16,
+              color: Colors.black,
+              fontWeight: FontWeight.normal, 
             ),
           ),
           icon,
         ],
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   // Setting item to turn on and off
   Widget _settingItemOnOff(String text, bool isSwitched, ValueChanged<bool> onChanged) {
-    return GestureDetector(
-      onTap: () {},
+    return SizedBox(
+    width: double.infinity, 
+    child: ElevatedButton(
+      onPressed: (){
+        onChanged(!isSwitched);
+        },
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.white, 
+        elevation: 0, 
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero, 
+          side: BorderSide.none, 
+        ),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             text,
+            textAlign: TextAlign.start,
             style: TextStyle(
               fontSize: 16,
+              color: Colors.black, 
+              fontWeight: FontWeight.normal, 
             ),
           ),
           Switch(
@@ -222,6 +233,6 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ],
       ),
-    );
+    ));
   }
 }
