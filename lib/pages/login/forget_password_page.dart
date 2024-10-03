@@ -25,7 +25,7 @@ class ForgetPasswordPage extends StatelessWidget {
               ),
               child: Center(
                 child: SvgPicture.asset(
-                  'lib/img/logo.svg',
+                  'assets/img/logo.svg',
                   height: 200, 
                 ),
               ),

@@ -27,7 +27,7 @@ class ChildLocationTile extends StatelessWidget {
         
       ],
       color: childLocation.active == 'null' ? Apptheme.colors.pale_blue.withOpacity(0.3): Apptheme.colors.white,
-        borderRadius: BorderRadius.circular(8)
+        borderRadius: BorderRadius.circular(20)
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween, 

@@ -27,7 +27,7 @@ class LoginPage extends StatelessWidget {
                   child: Center(
                       // Container for logo with shadow
                       child: SvgPicture.asset(
-                        'lib/img/logo.svg',
+                        'assets/img/logo.svg',
                         height: 200, 
                       ),
                     ),

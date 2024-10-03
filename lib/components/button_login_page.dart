@@ -62,7 +62,7 @@ class ButtonLoginPage extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12.0),
             child: SvgPicture.asset(
-              'lib/img/goggle.svg',
+              'assets/img/goggle.svg',
               height: 24,
             ),
           ),

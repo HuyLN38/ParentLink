@@ -28,7 +28,7 @@ class LocationPage extends StatelessWidget {
             left: 0,
             right: 0,
             child: Image.asset(
-              'lib/img/map.jpg',
+              'assets/img/map.jpg',
               height: 300,
               fit: BoxFit.fill,
             )),
@@ -61,7 +61,7 @@ class LocationPage extends StatelessWidget {
                 child: GestureDetector(
                   onTap: (){},
                   child: Image.asset(
-                    'lib/img/position.png',
+                    'assets/img/position.png',
                     height: 30,
                   ),
                 ),
@@ -138,7 +138,7 @@ class LocationPage extends StatelessWidget {
                 top: 430,
                 left: 0,
                 right: 0,
-                bottom: 70,
+                bottom: 0,
                 child: SingleChildScrollView(
                   child: Column(
                     children: childStateList.map((childLocation) {
@@ -181,9 +181,9 @@ class LocationPage extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(width: 20,),
+                    Spacer(),
 
-                    //send message
+                    //send message button
                     Container(
                       decoration: BoxDecoration(
                         color: Apptheme.colors.white,
@@ -219,7 +219,9 @@ class LocationPage extends StatelessWidget {
                           ],
                         ),
                       ),
-                    )
+                    ),
+                    Spacer(),
+
                   ],
                 )
               )
