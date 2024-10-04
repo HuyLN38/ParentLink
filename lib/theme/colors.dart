@@ -11,6 +11,7 @@ class AppColors{
   final orage = const Color(0xFFFFA726);
   final red = const Color(0xFFF44336);
   final green = const Color(0xFF4CAF50);
+  final green_active = const Color(0xff31A24C);
   final pale_blue = const Color(0xFFDBEDEA );
 
 const AppColors();

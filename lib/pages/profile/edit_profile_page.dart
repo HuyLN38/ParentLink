@@ -41,6 +41,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           ),
                 Stack(
                   children: [
+                    //avatar
                     Container(
                         child: Align(
                           alignment: Alignment.center,
