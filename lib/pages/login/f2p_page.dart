@@ -4,6 +4,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parent_link/theme/app.theme.dart';
 import 'dart:async';
 
+import 'package:pinput/pinput.dart';
+
 class F2pPage extends StatefulWidget {
   const F2pPage({super.key});
 
@@ -12,18 +14,12 @@ class F2pPage extends StatefulWidget {
 }
 
 class _F2pPageState extends State<F2pPage> {
-  late List<TextEditingController> otpControllers;
-  late List<FocusNode> focusNodes;
   int timeLeft = 60;
   late final Timer timer;
 
   @override
   void initState() {
     super.initState();
-
-    // Initialize OTP controllers and focus nodes
-    otpControllers = List.generate(6, (_) => TextEditingController());
-    focusNodes = List.generate(6, (_) => FocusNode());
 
     // Countdown timer logic
     timer = Timer.periodic(Duration(seconds: 1), (Timer timer) {
@@ -40,20 +36,29 @@ class _F2pPageState extends State<F2pPage> {
   @override
   void dispose() {
     // Dispose of the controllers and focus nodes
-    for (var controller in otpControllers) {
-      controller.dispose();
-    }
-    for (var node in focusNodes) {
-      node.dispose();
-    }
     timer.cancel();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    //pintheme for opt
+    final defaultPinTheme = PinTheme(
+      width: 40,
+      height: 40,
+      textStyle: TextStyle(
+        fontSize: 22,
+        color: Apptheme.colors.black
+      ),
+      decoration: BoxDecoration(
+        color: Apptheme.colors.gray_light.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.transparent)
+      )
+    );
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Apptheme.colors.white,
       body: Center(
         child: SingleChildScrollView(
           child: Column(
@@ -104,49 +109,23 @@ class _F2pPageState extends State<F2pPage> {
                       textAlign: TextAlign.center,
                     ),
                     SizedBox(height: 20),
+
                     // OTP input field
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: List.generate(6, (index) {
-                        return SizedBox(
-                          width: 40,
-                          child: TextField(
-                            controller: otpControllers[index],
-                            focusNode: focusNodes[index],
-                            keyboardType: TextInputType.numberWithOptions(signed: false, decimal: false), 
-                            maxLength: 1,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(fontSize: 20),
-                            decoration: InputDecoration(
-                              filled: true,
-                              fillColor: Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(color: Colors.grey),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(color: Colors.grey),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide: BorderSide(color: Apptheme.colors.blue),
-                              ),
-                              counterText: '',
+                      children: [
+                          Pinput(
+                            length: 6,
+                            defaultPinTheme: defaultPinTheme,
+                            focusedPinTheme: defaultPinTheme.copyWith(
+                              decoration: defaultPinTheme.decoration!.copyWith(
+                                border: Border.all(color: Apptheme.colors.gray)
+                              )
                             ),
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            onChanged: (value) {
-                              if (value.isNotEmpty && index < 5) {
-                                FocusScope.of(context).requestFocus(focusNodes[index + 1]);
-                              }
-                              if (value.isEmpty && index > 0) {
-                                FocusScope.of(context).requestFocus(focusNodes[index - 1]);
-                              }
-                            },
-                          ),
-                        );
-                      }),
+                          )
+                      ],
                     ),
+                    
                     SizedBox(height: 20),
                     // Resend OTP logic
                     Text(
