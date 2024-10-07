@@ -76,7 +76,7 @@ class WidgetItemMessage extends StatelessWidget {
                       chatName,
                       style: TextStyle(
                         fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w500,
                         color: Apptheme.colors.black
                       ),
                     ),

@@ -120,8 +120,11 @@ class _F2pPageState extends State<F2pPage> {
                             focusedPinTheme: defaultPinTheme.copyWith(
                               decoration: defaultPinTheme.decoration!.copyWith(
                                 border: Border.all(color: Apptheme.colors.gray)
-                              )
+                              ),
                             ),
+                            onCompleted: (pin){
+                              Navigator.pushNamed(context, '/main_page');      //change to main page after complete otp
+                            },
                           )
                       ],
                     ),
