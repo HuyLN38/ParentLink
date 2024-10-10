@@ -29,7 +29,7 @@ final List<Widget> _page =[
       //home pape
   const HomePage(),
       // scchedule page
-  const SchedulePage(),
+  const MapPage(),
     //message page
   const MessagePage(),
     //profile page
