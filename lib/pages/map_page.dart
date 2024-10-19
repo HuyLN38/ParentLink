@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_map/flutter_map.dart'; // flutter map, not mapbox
 import 'package:latlong2/latlong.dart';
+// import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';//mapbox, not flutter map XD
+//maybe just a model
+class MarkerData {
+  final LatLng position;
+  final String imagePath;
+
+  MarkerData({required this.position, required this.imagePath});
+}
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -11,7 +19,18 @@ class MapPage extends StatefulWidget {
 
 class _MapPageState extends State<MapPage> {
   MapController? mapController;
-
+  // // Danh sách dữ liệu marker
+  // List<MarkerData> markersData = [
+  //   MarkerData(
+  //     position: LatLng(21.048196693832384, 105.80171964077277),
+  //     imagePath: 'assets/img/child2.png',
+  //   ),
+  //   MarkerData(
+  //     position: LatLng(21.046636636481633, 105.80199521683643),
+  //     imagePath: 'assets/img/child3.png',
+  //   ),
+  //   // Bạn có thể thêm bao nhiêu marker tùy ý vào danh sách này
+  // ];
   @override
   Widget build(BuildContext context) {
    return Scaffold(
@@ -37,6 +56,21 @@ class _MapPageState extends State<MapPage> {
             },
 
           ),
+          MarkerLayer(
+            markers: [
+              Marker(point: LatLng(21.047380, 105.807170),
+                  width: 40,
+                  height: 40,
+
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Image.asset('assets/img/child1.png')
+                    ],
+                  ))
+            ],
+          )
+
         ],
       ),
     );
