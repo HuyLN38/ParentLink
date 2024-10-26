@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parent_link/theme/app.theme.dart';
 import 'dart:async';
-
+import 'package:parent_link/pages/login/handlers/AuthServices.dart';
 import 'package:pinput/pinput.dart';
 
 class F2pPage extends StatefulWidget {
@@ -14,15 +14,36 @@ class F2pPage extends StatefulWidget {
 }
 
 class _F2pPageState extends State<F2pPage> {
+  final TextEditingController _otpController = TextEditingController();
+  final AuthService _authService = AuthService();
   int timeLeft = 60;
   late final Timer timer;
+
+  String? _errorMessage;
+
+  void _register() async {
+    setState(() {
+      _errorMessage = null;
+    });
+
+    final otp = _otpController.text;
+
+    final result = await _authService.validOTP(otp);
+    setState(() {
+      if (result.containsKey('error')) {
+        _errorMessage = result['error'];
+      } else {
+        Navigator.pushNamed(context, '/login_page');
+      }
+    });
+  }
 
   @override
   void initState() {
     super.initState();
 
     // Countdown timer logic
-    timer = Timer.periodic(Duration(seconds: 1), (Timer timer) {
+    timer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
       if (timeLeft > 0) {
         setState(() {
           timeLeft--;
@@ -42,20 +63,14 @@ class _F2pPageState extends State<F2pPage> {
 
   @override
   Widget build(BuildContext context) {
-    //pintheme for opt
     final defaultPinTheme = PinTheme(
-      width: 40,
-      height: 40,
-      textStyle: TextStyle(
-        fontSize: 22,
-        color: Apptheme.colors.black
-      ),
-      decoration: BoxDecoration(
-        color: Apptheme.colors.gray_light.withOpacity(0.6),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.transparent)
-      )
-    );
+        width: 40,
+        height: 40,
+        textStyle: TextStyle(fontSize: 22, color: Apptheme.colors.black),
+        decoration: BoxDecoration(
+            color: Apptheme.colors.gray_light.withOpacity(0.6),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.transparent)));
 
     return Scaffold(
       backgroundColor: Apptheme.colors.white,
@@ -93,14 +108,14 @@ class _F2pPageState extends State<F2pPage> {
                       color: Colors.grey.withOpacity(0.5),
                       spreadRadius: 2,
                       blurRadius: 5,
-                      offset: Offset(0, 3), // changes position of shadow
+                      offset: const Offset(0, 3), // changes position of shadow
                     ),
                   ],
                 ),
                 child: Column(
                   children: [
                     // OTP instruction
-                    Text(
+                    const Text(
                       'Please check your inbox or another device for the OTP code to login',
                       style: TextStyle(
                         fontSize: 16,
@@ -108,33 +123,43 @@ class _F2pPageState extends State<F2pPage> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    SizedBox(height: 20),
-
+                    const SizedBox(height: 20),
                     // OTP input field
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                          Pinput(
-                            length: 6,
-                            defaultPinTheme: defaultPinTheme,
-                            focusedPinTheme: defaultPinTheme.copyWith(
-                              decoration: defaultPinTheme.decoration!.copyWith(
-                                border: Border.all(color: Apptheme.colors.gray)
-                              ),
-                            ),
-                            onCompleted: (pin){
-                              Navigator.pushNamed(context, '/main_page');      //change to main page after complete otp
-                            },
-                          )
+                        Pinput(
+                          controller: _otpController,
+                          length: 6,
+                          defaultPinTheme: defaultPinTheme,
+                          focusedPinTheme: defaultPinTheme.copyWith(
+                            decoration: defaultPinTheme.decoration!.copyWith(
+                                border:
+                                    Border.all(color: Apptheme.colors.gray)),
+                          ),
+                          onCompleted: (pin) {
+                            // Trigger OTP verification
+                            _register();
+                          },
+                        )
                       ],
                     ),
-                    
-                    SizedBox(height: 20),
+
+                    const SizedBox(height: 20),
                     // Resend OTP logic
                     Text(
                       'Send OTP again in $timeLeft seconds',
-                      style: TextStyle(color: Colors.grey),
+                      style: const TextStyle(color: Colors.grey),
                     ),
+                    const SizedBox(height: 8.0),
+                    if (_errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 25),
+                        child: Text(
+                          _errorMessage!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
                     // Resend OTP button (after 60 seconds)
                     timeLeft == 0
                         ? TextButton(
@@ -142,7 +167,8 @@ class _F2pPageState extends State<F2pPage> {
                               setState(() {
                                 timeLeft = 60;
                                 timer.cancel();
-                                timer = Timer.periodic(Duration(seconds: 1), (Timer timer) {
+                                timer = Timer.periodic(
+                                    const Duration(seconds: 1), (Timer timer) {
                                   if (timeLeft > 0) {
                                     setState(() {
                                       timeLeft--;
@@ -153,9 +179,9 @@ class _F2pPageState extends State<F2pPage> {
                                 });
                               });
                             },
-                            child: Text('Resend OTP'),
+                            child: const Text('Resend OTP'),
                           )
-                        : SizedBox(),
+                        : const SizedBox(),
                   ],
                 ),
               ),

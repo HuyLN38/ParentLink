@@ -103,7 +103,7 @@ class OpenPage extends StatelessWidget {
           ),
           const SizedBox(height: 25),
           ButtonOpenPage(
-            onTap: () {},
+            onTap: () => Navigator.pushNamed(context, '/children_qr'),
             text: 'Children',
           ),
         ],
@@ -118,10 +118,12 @@ class AnimatedGradientBackground extends StatefulWidget {
   const AnimatedGradientBackground({super.key, required this.child});
 
   @override
-  State<AnimatedGradientBackground> createState() => _AnimatedGradientBackgroundState();
+  State<AnimatedGradientBackground> createState() =>
+      _AnimatedGradientBackgroundState();
 }
 
-class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground> with SingleTickerProviderStateMixin {
+class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
 
   @override
@@ -168,4 +170,3 @@ class _AnimatedGradientBackgroundState extends State<AnimatedGradientBackground>
     );
   }
 }
- 

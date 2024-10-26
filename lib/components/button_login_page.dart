@@ -7,38 +7,43 @@ class ButtonLoginPage extends StatelessWidget {
   final String text;
   final Color? color;
 
-  const ButtonLoginPage({super.key, required this.onPressed, required this.text, required this.color});
+  const ButtonLoginPage(
+      {super.key,
+      required this.onPressed,
+      required this.text,
+      required this.color});
 
   @override
   Widget build(BuildContext context) {
-    if(color == null) 
-    return ElevatedButton(
-      onPressed: () {
-        if (onPressed != null) {
-          onPressed!(); 
-        }
-      },
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Apptheme.colors.blue_50, 
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-          side: BorderSide(
-            color: Apptheme.colors.black, 
-            width: 1,
+    if (color == null) {
+      return ElevatedButton(
+        onPressed: () {
+          if (onPressed != null) {
+            onPressed!();
+          }
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Apptheme.colors.blue_50,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: BorderSide(
+              color: Apptheme.colors.black,
+              width: 1,
+            ),
           ),
         ),
-      ),
-      child: Center(
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: Colors.black, 
-            fontSize: 16,
+        child: Center(
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 16,
+            ),
           ),
         ),
-      ),
-    );
+      );
+    }
 
 //login with google
     return ElevatedButton(
@@ -46,7 +51,7 @@ class ButtonLoginPage extends StatelessWidget {
         // Handle login action
       },
       style: ElevatedButton.styleFrom(
-        backgroundColor: color, 
+        backgroundColor: color,
         padding: const EdgeInsets.symmetric(vertical: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
@@ -76,6 +81,5 @@ class ButtonLoginPage extends StatelessWidget {
         ],
       ),
     );
-
   }
 }
