@@ -67,7 +67,7 @@ class Apis {
         }
       };
 
-      const projectID = 'flutter-chat-app-d0ca7';
+      const projectID = 'parentlink-30210';
       final bearerToken = await NotificationAccessToken.getToken;
 
       if (bearerToken == null) {
