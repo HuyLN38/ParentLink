@@ -109,7 +109,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   )),
             ],
           ),
-  
           body: StreamBuilder(
             stream: Apis.getMyUsersId(),
             builder: (context, snapshot) {
@@ -119,9 +118,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return const Center(child: Text('No Users Found'));
-              } 
-              
-              else {
+              } else {
                 final userIds =
                     snapshot.data?.docs.map((e) => e.id).toList() ?? [];
 
@@ -182,94 +179,93 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // for adding new chat user
   void _addChatUserDialog() {
-    String email = '';
+    String userId = '';
     final _addChatUserKey = GlobalKey<FormState>();
 
     showDialog(
-        context: context,
-        builder: (_) => AlertDialog(
-              contentPadding: const EdgeInsets.only(
-                  left: 24, right: 24, top: 20, bottom: 10),
+      context: context,
+      builder: (_) => AlertDialog(
+        contentPadding:
+            const EdgeInsets.only(left: 24, right: 24, top: 20, bottom: 10),
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(20))),
 
-              shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.all(Radius.circular(20))),
+        // Title
+        title: const Row(
+          children: [
+            Icon(
+              Icons.add,
+              color: Colors.blue,
+              size: 28,
+            ),
+            Text(' Add User by ID')
+          ],
+        ),
 
-              //title
-              title: const Row(
-                children: [
-                  Icon(
-                    Icons.add,
-                    color: Colors.blue,
-                    size: 28,
-                  ),
-                  Text(' Add User')
-                ],
-              ),
-
-              //content
-              content: Form(
-                key: _addChatUserKey,
-                child: TextFormField(
-                  maxLines: null,
-                  onChanged: (value) => email = value,
-                  decoration: const InputDecoration(
-                      hintText: 'Email Id',
-                      prefixIcon: Icon(
-                        Icons.email_outlined,
-                        color: Colors.blueAccent,
-                      ),
-                      border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(15)))),
-                  validator: (value) {
-                    if (value == null ||
-                        !value.contains('@') ||
-                        value.trim().isEmpty) {
-                      return 'Please enter a valid email address';
-                    }
-                    return null;
-                  },
+        // Content
+        content: Form(
+          key: _addChatUserKey,
+          child: TextFormField(
+            maxLines: null,
+            onChanged: (value) => userId = value.trim(),
+            decoration: const InputDecoration(
+                hintText: 'User ID',
+                prefixIcon: Icon(
+                  Icons.person_outline,
+                  color: Colors.blueAccent,
                 ),
-              ),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.all(Radius.circular(15)))),
+            validator: (value) {
+              if (value == null || value.trim().isEmpty) {
+                return 'Please enter a valid user ID';
+              }
+              return null;
+            },
+          ),
+        ),
 
-              //actions
-              actions: [
-                //cancel button
-                MaterialButton(
-                    onPressed: () {
-                      //hide alert dialog
-                      Navigator.pop(context);
-                    },
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(color: Colors.blue, fontSize: 16),
-                    )),
+        // Actions
+        actions: [
+          MaterialButton(
+            onPressed: () {
+              // Hide the dialog
+              Navigator.pop(context);
+            },
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.blue, fontSize: 16),
+            ),
+          ),
+          MaterialButton(
+            onPressed: () async {
+              final isValid = _addChatUserKey.currentState!.validate();
+              if (isValid) {
+                Navigator.pop(context);
+                await _addChatUserById(userId);
+              }
+            },
+            child: const Text(
+              'Add',
+              style: TextStyle(color: Colors.blue, fontSize: 16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                //Add button
-                MaterialButton(
-                    onPressed: () async {
-                      final isValid = _addChatUserKey.currentState!.validate();
-                      if (isValid) {
-                        Navigator.pop(context);
-                        await Apis.addChatUser(email).then(
-                          (value) {
-                            if (!value) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                      content:
-                                          const Text('User does not exists!'),
-                                      backgroundColor:
-                                          Theme.of(context).colorScheme.error,
-                                      behavior: SnackBarBehavior.floating));
-                            }
-                          },
-                        );
-                      }
-                    },
-                    child: const Text(
-                      'Add',
-                      style: TextStyle(color: Colors.blue, fontSize: 16),
-                    ))
-              ],
-            ));
+  Future<void> _addChatUserById(String userId) async {
+    // Call your API method with the entered user ID
+    final userExists = await Apis.addChatUserById(userId);
+    if (!userExists) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('User does not exist!'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 }
