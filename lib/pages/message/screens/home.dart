@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:parent_link/pages/message/widgets/chat_user_card.dart';
+import 'package:parent_link/theme/app.theme.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -60,16 +61,66 @@ class _HomeScreenState extends State<HomeScreen> {
         canPop: false,
         child: Scaffold(
           appBar: AppBar(
+            toolbarHeight: 100,
+            backgroundColor: Apptheme.colors.blue,
             centerTitle: true,
             elevation: 1,
+            leadingWidth: !isSearching ? 200 : null,
+            leading: !isSearching
+                ? FutureBuilder(
+                    future: Apis.getSelfInfo(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Center(child: CircularProgressIndicator()),
+                        );
+                      } else if (snapshot.hasError) {
+                        return const Text('Error loading profile');
+                      } else {
+                        return Padding(
+                          padding: const EdgeInsets.only(left: 20),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              CircleAvatar(
+                                radius: 25,
+                                backgroundImage: Apis.me.image != null &&
+                                        Apis.me.image!.isNotEmpty
+                                    ? NetworkImage(Apis.me.image!)
+                                    : const AssetImage(
+                                            'assets/img/avatar_mom.png')
+                                        as ImageProvider,
+                              ),
+                              const SizedBox(width: 12),
+                              Text(
+                                Apis.me.name ?? "Fail to display",
+                                style: TextStyle(
+                                  color: Apptheme.colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                    },
+                  )
+                : null,
             title: isSearching
                 ? TextField(
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       border: InputBorder.none,
                       hintText: 'Name, Email...',
+                      hintStyle: TextStyle(color: Apptheme.colors.white),
                     ),
                     autofocus: true,
-                    style: const TextStyle(fontSize: 18, letterSpacing: 0.5),
+                    style: TextStyle(
+                      fontSize: 18,
+                      letterSpacing: 0.5,
+                      color: Apptheme.colors.white,
+                    ),
                     onChanged: (value) {
                       searchList.clear();
 
@@ -89,88 +140,152 @@ class _HomeScreenState extends State<HomeScreen> {
                       }
                     },
                   )
-                : const Text('Home Page'),
-            leading: const Icon(Icons.home),
+                : null,
             actions: [
-              IconButton(
-                  onPressed: () {
-                    setState(() {
-                      isSearching = !isSearching;
-                    });
-                  },
-                  icon: Icon(isSearching ? Icons.cancel : Icons.search)),
+              Container(
+                decoration: BoxDecoration(
+                  color: Apptheme.colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: SizedBox(
+                  height: 40,
+                  width: 40,
+                  child: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          isSearching = !isSearching;
+                        });
+                      },
+                      icon: Icon(isSearching ? Icons.cancel : Icons.search)),
+                ),
+              ),
               IconButton(
                   onPressed: () {
                     _addChatUserDialog();
                   },
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.person_add_rounded,
-                    color: Colors.blueAccent,
+                    color: Apptheme.colors.white,
                   )),
             ],
           ),
-          body: StreamBuilder(
-            stream: Apis.getMyUsersId(),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) {
-                return const Center(child: Text('An error occurred'));
-              }
-
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return const Center(child: Text('No Users Found'));
-              } else {
-                final userIds =
-                    snapshot.data?.docs.map((e) => e.id).toList() ?? [];
-
-                if (userIds.isEmpty) {
-                  return const Center(
-                    child: Text('No Users Found'),
-                  );
-                }
-
-                return StreamBuilder(
-                  stream: Apis.getAllUser(userIds),
-                  builder: (context, snapshot) {
-                    switch (snapshot.connectionState) {
-                      case ConnectionState.waiting:
-                      case ConnectionState.none:
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      default:
-                        final data = snapshot.data?.docs;
-                        list = data
-                                ?.map((e) => ChatUser.fromJson(e.data()))
-                                .toList() ??
-                            [];
-
-                        if (list.isNotEmpty) {
-                          return ListView.builder(
-                            itemCount:
-                                isSearching ? searchList.length : list.length,
-                            padding: const EdgeInsets.only(top: 10),
-                            physics: const BouncingScrollPhysics(),
-                            itemBuilder: (context, index) {
-                              return ChatUserCard(
-                                user: isSearching
-                                    ? searchList[index]
-                                    : list[index],
-                              );
-                            },
-                          );
-                        } else {
-                          return const Center(
-                            child: Text(
-                              'No Users Found',
-                              style: TextStyle(fontSize: 20),
+          body: Container(
+            decoration: BoxDecoration(
+              color: Apptheme.colors.white,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Apptheme.colors.blue,
+                  spreadRadius: 15,
+                  blurRadius: 10,
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Container(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          "Chats",
+                          style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            // Add your manage button action here
+                          },
+                          child: const Text(
+                            "Manage",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
                             ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: StreamBuilder(
+                    stream: Apis.getMyUsersId(),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasError) {
+                        return const Center(child: Text('An error occurred'));
+                      }
+
+                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                        return const Center(child: Text('No Users Found'));
+                      } else {
+                        final userIds =
+                            snapshot.data?.docs.map((e) => e.id).toList() ?? [];
+
+                        if (userIds.isEmpty) {
+                          return const Center(
+                            child: Text('No Users Found'),
                           );
                         }
-                    }
-                  },
-                );
-              }
-            },
+
+                        return StreamBuilder(
+                          stream: Apis.getAllUser(userIds),
+                          builder: (context, snapshot) {
+                            switch (snapshot.connectionState) {
+                              case ConnectionState.waiting:
+                              case ConnectionState.none:
+                                return const Center(
+                                  child: CircularProgressIndicator(),
+                                );
+                              default:
+                                final data = snapshot.data?.docs;
+                                list = data
+                                        ?.map(
+                                            (e) => ChatUser.fromJson(e.data()))
+                                        .toList() ??
+                                    [];
+
+                                if (list.isNotEmpty) {
+                                  return ListView.builder(
+                                    itemCount: isSearching
+                                        ? searchList.length
+                                        : list.length,
+                                    padding: const EdgeInsets.only(top: 10),
+                                    physics: const BouncingScrollPhysics(),
+                                    itemBuilder: (context, index) {
+                                      return ChatUserCard(
+                                        user: isSearching
+                                            ? searchList[index]
+                                            : list[index],
+                                      );
+                                    },
+                                  );
+                                } else {
+                                  return const Center(
+                                    child: Text(
+                                      'No Users Found',
+                                      style: TextStyle(fontSize: 20),
+                                    ),
+                                  );
+                                }
+                            }
+                          },
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

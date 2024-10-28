@@ -3,6 +3,7 @@ import 'package:parent_link/model/chat_user.dart';
 import 'package:parent_link/model/message.dart';
 import 'package:flutter/material.dart';
 import 'package:parent_link/pages/message/screens/chat.dart';
+import 'package:parent_link/theme/app.theme.dart';
 
 class ChatUserCard extends StatefulWidget {
   final ChatUser user;
@@ -55,14 +56,21 @@ class _ChatUserCardState extends State<ChatUserCard> {
                       ? null
                       : const Icon(Icons.person_3_sharp),
                 ),
-                title: Text(widget.user.name ?? 'No Name'),
+                title: Text(
+                  widget.user.name ?? 'No Name',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    color: Apptheme.colors.black,
+                  ),
+                ),
                 subtitle: Text(
                   message != null
                       ? message!.type == Type.image
                           ? 'Image'
                           : message!.msg!
                       : widget.user.about ?? 'Hey there! I am using Chat.',
-                  style: const TextStyle(color: Colors.black54),
+                  style: TextStyle(color: Apptheme.colors.black),
                   maxLines: 1,
                 ),
                 trailing: Container(
