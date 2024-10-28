@@ -10,6 +10,7 @@ import (
 
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
@@ -42,7 +43,9 @@ func main() {
 	router.POST("/login", firebase.LoginHandler)
 	router.POST("/users/:staticID/children", firebase.AddChild)
 	router.GET("/users/:staticID/children", firebase.GetChildren)
+	router.GET("/users/:staticID/children/:childID", firebase.CheckIfChildExists)
 	router.DELETE("/users/:staticID", firebase.DeleteUser)
+	router.GET("/users/:staticID", firebase.CheckAccountExists)
 	router.POST("/changePassword/", firebase.ChangePassword)
 	router.GET("/hello-world", myGetFunction)
 	router.GET("/register/:otp", firebase.ValidateOTP)

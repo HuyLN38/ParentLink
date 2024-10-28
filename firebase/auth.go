@@ -29,12 +29,22 @@ type OTPValidationRequest struct {
 }
 
 func generateOTP() (string, error) {
-	b := make([]byte, 3)
+	b := make([]byte, 6)
 	_, err := rand.Read(b)
 	if err != nil {
 		return "", err
 	}
 	return fmt.Sprintf("%06d", b[0]<<16|b[1]<<8|b[2]), nil
+}
+
+func CheckAccountExists(c *gin.Context) {
+	staticID := c.Param("staticID")
+	_, err := authClient.GetUser(context.Background(), staticID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No user found"})
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "User found"})
+	return
 }
 
 func RegisterHandler(c *gin.Context) {
@@ -68,8 +78,6 @@ func RegisterHandler(c *gin.Context) {
 		time.Sleep(5 * time.Minute)
 		docRef.Delete(context.Background())
 	}()
-
-	c.JSON(http.StatusOK, gin.H{"otp": otp})
 }
 
 func ValidateOTP(c *gin.Context) {
