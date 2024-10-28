@@ -42,6 +42,7 @@ func CheckAccountExists(c *gin.Context) {
 	_, err := authClient.GetUser(context.Background(), staticID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "No user found"})
+		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "User found"})
 	return
