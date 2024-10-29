@@ -202,11 +202,13 @@ func DeleteChild(c *gin.Context) {
 
 func GetChildrenStatus(c *gin.Context) {
 	staticID := c.Param("staticID")
+	childID := c.Param("childID")
+
 	var children []Child
 
-	query := `SELECT child_id, name, last_seen, longitude, latitude, speed, battery
-              FROM children WHERE static_id=$1`
-	rows, err := db.Query(context.Background(), query, staticID)
+	query := `SELECT name, last_seen, longitude, latitude, speed, battery
+              FROM children WHERE static_id=$1 AND child_id=$2`
+	rows, err := db.Query(context.Background(), query, staticID, childID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch children"})
 		return
