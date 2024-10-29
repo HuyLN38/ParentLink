@@ -31,6 +31,7 @@ type Child struct {
 	Longitude    float64   `json:"longitude"`
 	Latitude     float64   `json:"latitude"`
 	Speed        float64   `json:"speed"`
+	Battery      int       `json:"battery"`
 }
 
 func UpdateChildLocation(c *gin.Context) {
@@ -217,7 +218,7 @@ func GetChildrenStatus(c *gin.Context) {
 
 	for rows.Next() {
 		var child Child
-		err := rows.Scan(&child.ChildID, &child.Name, &child.Birthday, &child.LastModified, &child.LastSeen, &child.PhoneNumber, &child.Avatar)
+		err := rows.Scan(&child.Name, &child.LastSeen, &child.Longitude, &child.Latitude, &child.Speed, &child.Battery)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read child data"})
 			return
