@@ -41,11 +41,19 @@ func main() {
 	router.Use(CORSMiddleware())
 	router.POST("parentlink/register", firebase.RegisterHandler)
 	router.POST("parentlink/login", firebase.LoginHandler)
+
 	router.POST("parentlink/users/:staticID/children", firebase.AddChild)
 	router.GET("parentlink/users/:staticID/children", firebase.GetChildren)
 	router.GET("parentlink/users/:staticID/childrenlist", firebase.GetChildrenList)
+
+	router.GET("parentlink/users/:staticID/children-avatar/:childID", firebase.GetChildAvatar)
+	router.GET("parentlink/users/:staticID/children-status/:childID", firebase.GetChildrenStatus)
+
 	router.GET("parentlink/users/:staticID/children/:childID", firebase.CheckIfChildExists)
 	router.PUT("parentlink/users/:staticID/children/:childID", firebase.UpdateChildLocation)
+
+	router.DELETE("parentlink/users/:staticID/children/:childID", firebase.DeleteChild)
+
 	router.DELETE("parentlink/users/:staticID", firebase.DeleteUser)
 	router.GET("parentlink/users/:staticID", firebase.CheckAccount)
 	router.POST("parentlink/changePassword/", firebase.ChangePassword)

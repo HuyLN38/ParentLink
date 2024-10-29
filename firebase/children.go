@@ -146,11 +146,65 @@ func GetChildren(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"status": "Children fetched successfully", "children": children})
 }
 
+func GetChildAvatar(c *gin.Context) {
+	staticID := c.Param("staticID")
+	childID := c.Param("childID")
+
+	var avatar string
+	query := `SELECT avatar FROM children WHERE static_id=$1 AND child_id=$2`
+	err := db.QueryRow(context.Background(), query, staticID, childID).Scan(&avatar)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch child avatar"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"avatar": avatar})
+}
+
 func GetChildrenList(c *gin.Context) {
 	staticID := c.Param("staticID")
 	var children []Child
 
-	query := `SELECT child_id, name, birthday, last_modified, last_seen, phone, avatar 
+	query := `SELECT child_id, name, birthday, last_modified, last_seen, phone, battery FROM children WHERE static_id=$1`
+	rows, err := db.Query(context.Background(), query, staticID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch children"})
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var child Child
+		err := rows.Scan(&child.ChildID, &child.Name, &child.Birthday, &child.LastModified, &child.LastSeen, &child.PhoneNumber, &child.Avatar)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read child data"})
+			return
+		}
+		children = append(children, child)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "Children fetched successfully", "children": children})
+}
+
+func DeleteChild(c *gin.Context) {
+	staticID := c.Param("staticID")
+	childID := c.Param("childID")
+
+	query := `DELETE FROM children WHERE static_id=$1 AND child_id=$2`
+	_, err := db.Exec(context.Background(), query, staticID, childID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete child"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "Child deleted successfully"})
+}
+
+func GetChildrenStatus(c *gin.Context) {
+	staticID := c.Param("staticID")
+	var children []Child
+
+	query := `SELECT child_id, name, last_seen, longitude, latitude, speed, battery
               FROM children WHERE static_id=$1`
 	rows, err := db.Query(context.Background(), query, staticID)
 	if err != nil {
