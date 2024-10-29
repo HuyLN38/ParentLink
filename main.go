@@ -39,18 +39,18 @@ func main() {
 	// Create a new router
 	router := gin.Default()
 	router.Use(CORSMiddleware())
-	router.POST("/register", firebase.RegisterHandler)
-	router.POST("/login", firebase.LoginHandler)
-	router.POST("/users/:staticID/children", firebase.AddChild)
-	router.GET("/users/:staticID/children", firebase.GetChildren)
-	router.GET("/users/:staticID/childrenlist", firebase.GetChildrenList)
-	router.GET("/users/:staticID/children/:childID", firebase.CheckIfChildExists)
-	router.DELETE("/users/:staticID", firebase.DeleteUser)
-	router.GET("/users/:staticID", firebase.CheckAccountExists)
-	router.POST("/changePassword/", firebase.ChangePassword)
-	router.GET("/hello-world", myGetFunction)
-	router.GET("/register/:otp", firebase.ValidateOTP)
-	router.GET("/send", func(c *gin.Context) {
+	router.POST("parentlink/register", firebase.RegisterHandler)
+	router.POST("parentlink/login", firebase.LoginHandler)
+	router.POST("parentlink/users/:staticID/children", firebase.AddChild)
+	router.GET("parentlink/users/:staticID/children", firebase.GetChildren)
+	router.GET("parentlink/users/:staticID/childrenlist", firebase.GetChildrenList)
+	router.GET("parentlink/users/:staticID/children/:childID", firebase.CheckIfChildExists)
+	router.DELETE("parentlink/users/:staticID", firebase.DeleteUser)
+	router.GET("parentlink/users/:staticID", firebase.CheckAccountExists)
+	router.POST("parentlink/changePassword/", firebase.ChangePassword)
+	router.GET("parentlink/hello-world", myGetFunction)
+	router.GET("parentlink/register/:otp", firebase.ValidateOTP)
+	router.GET("parentlink/send", func(c *gin.Context) {
 		email := "iloveTokuda@gmail.com"
 		code := "696969"
 		firebase.Send(c, email, code)
