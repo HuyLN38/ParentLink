@@ -43,6 +43,7 @@ func main() {
 	router.POST("/login", firebase.LoginHandler)
 	router.POST("/users/:staticID/children", firebase.AddChild)
 	router.GET("/users/:staticID/children", firebase.GetChildren)
+	router.GET("/users/:staticID/childrenlist", firebase.GetChildrenList)
 	router.GET("/users/:staticID/children/:childID", firebase.CheckIfChildExists)
 	router.DELETE("/users/:staticID", firebase.DeleteUser)
 	router.GET("/users/:staticID", firebase.CheckAccountExists)

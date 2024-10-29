@@ -1,16 +1,31 @@
 package firebase
 
 import (
-	"encoding/base64"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"strings"
 	"time"
 )
 
 type Child struct {
-	Name     string     `json:"name"`
-	Location [2]float64 `json:"location"`
+	ChildID      string    `json:"childId"`
+	Name         string    `json:"name"`
+	Birthday     string    `json:"birthday"`
+	Longitude    float64   `json:"longitude"`
+	Latitude     float64   `json:"latitude"`
+	LastModified time.Time `json:"lastModified"`
+	LastSeen     time.Time `json:"lastSeen"`
+	Speed        float64   `json:"speed"`
+	PhoneNumber  string    `json:"phone"`
+}
+
+type ChildRequest struct {
+	ChildID      string    `json:"childId"`
+	Name         string    `json:"name"`
+	Birthday     string    `json:"birthday"`
+	Phone        string    `json:"phone"`
+	LastModified time.Time `json:"lastModified"`
+	LastSeen     time.Time `json:"lastSeen"`
+	Avatar       string    `json:"avatar"`
 }
 
 func AddChild(c *gin.Context) {
@@ -18,10 +33,11 @@ func AddChild(c *gin.Context) {
 
 	// Define request structure
 	type ChildRequest struct {
-		ChildID  string `json:"childId" binding:"required,uuid"`
-		Name     string `json:"name" binding:"required"`
-		Birthday string `json:"birthday" binding:"required"`
-		Avatar   string `json:"avatar" binding:"required"`
+		ChildID     string `json:"childId" binding:"required,uuid"`
+		Name        string `json:"name" binding:"required"`
+		Birthday    string `json:"birthday" binding:"required"`
+		Avatar      string `json:"avatar" binding:"required"`
+		PhoneNumber string `json:"phone" binding:"required"`
 	}
 
 	var req ChildRequest
@@ -43,27 +59,6 @@ func AddChild(c *gin.Context) {
 		return
 	}
 
-	// Decode and validate base64 image
-	avatarData, err := base64.StdEncoding.DecodeString(req.Avatar)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid avatar format"})
-		return
-	}
-
-	// Validate image format and size
-	contentType := http.DetectContentType(avatarData)
-	if !strings.HasPrefix(contentType, "image/") {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid file type. Only images are allowed"})
-		return
-	}
-
-	// Set maximum file size (e.g., 5MB)
-	maxSize := 5 * 1024 * 1024 // 5MB in bytes
-	if len(avatarData) > maxSize {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Avatar image too large. Maximum size is 5MB"})
-		return
-	}
-
 	// Check if child document already exists
 	existingDoc := firestoreClient.Collection("users").Doc(staticID).Collection("children").Doc(req.ChildID)
 	docSnap, err := existingDoc.Get(c.Request.Context())
@@ -74,21 +69,29 @@ func AddChild(c *gin.Context) {
 
 	// Create child document
 	child := struct {
-		ChildID   string    `firestore:"childId"`
-		Name      string    `firestore:"name"`
-		Birthday  time.Time `firestore:"birthday"`
-		Avatar    []byte    `firestore:"avatar"`
-		Created   time.Time `firestore:"created"`
-		Longitude float64   `firestore:"longitude"`
-		Latitude  float64   `firestore:"latitude"`
+		ChildID      string    `firestore:"childId"`
+		Name         string    `firestore:"name"`
+		Birthday     time.Time `firestore:"birthday"`
+		Avatar       string    `firestore:"avatar"`
+		PhoneNumber  string    `firestore:"phone"`
+		Created      time.Time `firestore:"created"`
+		LastModified time.Time `firestore:"lastModified"`
+		LastSeen     time.Time `firestore:"lastSeen"`
+		Longitude    float64   `firestore:"longitude"`
+		Latitude     float64   `firestore:"latitude"`
+		Speed        float64   `json:"speed"`
 	}{
-		ChildID:   req.ChildID,
-		Name:      req.Name,
-		Birthday:  birthday,
-		Avatar:    avatarData,
-		Created:   time.Now(),
-		Longitude: 0,
-		Latitude:  0,
+		ChildID:      req.ChildID,
+		Name:         req.Name,
+		Birthday:     birthday,
+		Avatar:       req.Avatar,
+		Created:      time.Now(),
+		LastModified: time.Now(),
+		LastSeen:     time.Now(),
+		PhoneNumber:  req.PhoneNumber,
+		Longitude:    0,
+		Latitude:     0,
+		Speed:        0,
 	}
 
 	// Save to Firestore using the provided UUID as document ID
@@ -124,6 +127,25 @@ func CheckIfChildExists(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"status": "Child exists"})
+}
+
+func GetChildrenList(c *gin.Context) {
+	staticID := c.Param("staticID")
+
+	children := []ChildRequest{}
+	docs, err := firestoreClient.Collection("users").Doc(staticID).Collection("children").Documents(c.Request.Context()).GetAll()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch children"})
+		return
+	}
+
+	for _, doc := range docs {
+		var child ChildRequest
+		doc.DataTo(&child)
+		children = append(children, child)
+	}
+
+	c.JSON(http.StatusOK, children)
 }
 
 func GetChildren(c *gin.Context) {
