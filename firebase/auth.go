@@ -37,7 +37,7 @@ func generateOTP() (string, error) {
 	return fmt.Sprintf("%06d", b[0]<<16|b[1]<<8|b[2]), nil
 }
 
-func CheckAccountExists(c *gin.Context) {
+func CheckAccount(c *gin.Context) {
 	staticID := c.Param("staticID")
 	_, err := authClient.GetUser(context.Background(), staticID)
 	if err != nil {

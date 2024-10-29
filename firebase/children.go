@@ -33,6 +33,32 @@ type Child struct {
 	Speed        float64   `json:"speed"`
 }
 
+func UpdateChildLocation(c *gin.Context) {
+	staticID := c.Param("staticID")
+	childID := c.Param("childID")
+
+	type LocationRequest struct {
+		Longitude float64 `json:"longitude" binding:"required"`
+		Latitude  float64 `json:"latitude" binding:"required"`
+		Speed     float64 `json:"speed" binding:"required"`
+	}
+
+	var req LocationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	query := `UPDATE children SET longitude=$1, latitude=$2, speed=$3, last_seen=NOW() WHERE static_id=$4 AND child_id=$5`
+	_, err := db.Exec(context.Background(), query, req.Longitude, req.Latitude, req.Speed, staticID, childID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update child location"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "Location updated successfully"})
+}
+
 func AddChild(c *gin.Context) {
 	staticID := c.Param("staticID")
 
