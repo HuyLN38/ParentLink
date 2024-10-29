@@ -28,21 +28,24 @@ class _LoginPageState extends State<LoginPage> {
 
     final email = _emailController.text;
     final password = _passwordController.text;
-    final prefs = await SharedPreferences.getInstance();
     final result = await _authService.login(email, password);
 
-    setState(() async {
-      _isLoading = false;
-      if (result.containsKey('error')) {
+    if (result.containsKey('error')) {
+      setState(() {
+        _isLoading = false;
         _errorMessage = result['error'];
-      } else {
-        final SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', result['localId']);
-        await prefs.setString('role', 'parent');
+      });
+    } else {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('token', result['localId']);
+      await prefs.setString('role', 'parent');
 
-        Navigator.pushNamed(context, '/main_page');
-      }
-    });
+      setState(() {
+        _isLoading = false;
+      });
+
+      Navigator.pushNamed(context, '/main_page');
+    }
   }
 
   @override

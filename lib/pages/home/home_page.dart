@@ -12,30 +12,30 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-
   @override
   Widget build(BuildContext context) {
-    //access child' state list 
+    //access child' state list
     final childStateList = context.watch<ControlChildState>().getlistChild;
 
-    return
-    Scaffold(
+    return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25.0, vertical: 40),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
+          children: [
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 25.0, vertical: 40),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
                   ElevatedButton(
                     onPressed: () {
-                      // Add child activity
+                      Navigator.pushNamed(context, '/children_qr_2');
                     },
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-                      backgroundColor: Apptheme.colors.white, 
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 15, vertical: 8),
+                      backgroundColor: Apptheme.colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18),
                         side: BorderSide(
@@ -51,64 +51,57 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ),
-        
-        
-                       IconButton(
-                        icon: const Icon(Icons.notifications),
-                        onPressed: (){
-                          //do sth acitivity
-                        },
-                        iconSize: 36.0,
-                      ),
-                  ],
+                  IconButton(
+                    icon: const Icon(Icons.notifications),
+                    onPressed: () {},
+                    iconSize: 36.0,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(
+              height: 30,
+            ),
+            const Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 25.0),
+                child: Text("Hello Sarah",
+                    style: TextStyle(
+                      fontSize: 30,
+                    )),
+              ),
+            ),
+            const SizedBox(
+              height: 8,
+            ),
+            Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                child: Text("There are current new alert",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Apptheme.colors.gray,
+                    )),
+              ),
+            ),
+            const SizedBox(
+              height: 8,
+            ),
+            Stack(children: [
+              SingleChildScrollView(
+                child: Container(
+                  height: childStateList.length * 150,
                 ),
               ),
-              
-              const SizedBox(height: 30,),
-        
-              const Align(
-                alignment: Alignment.topLeft,
-                child: Padding(
-                  padding:  EdgeInsets.symmetric(horizontal: 25.0),
-                  child: Text("Hello Sarah", 
-                  style: TextStyle(
-                    fontSize: 30,
-                  )
-                  ),
-                ),
-              ),
-              const SizedBox(height: 8,),
-        
-                Align(
-                alignment: Alignment.topLeft,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                  child: Text("There are current new alert", 
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Apptheme.colors.gray,
-                  )
-                  ),
-                ),
-              ),
-        
-              const SizedBox(height: 8,),
-        
-             Stack(
-              children:[
-                SingleChildScrollView(
-                  child: Container(
-                    height: childStateList.length* 150,
-                  ),
-                ),
-                 ...List.generate(childStateList.length, (index) {
+              ...List.generate(childStateList.length, (index) {
                 final childState = childStateList[index];
                 return ChildStateTile(childState: childState, index: index);
               }),
-              ]
-            ),
-            ],
-          ),
+            ]),
+          ],
+        ),
       ),
     );
   }

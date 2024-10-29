@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:parent_link/theme/app.theme.dart';
-import 'package:uuid/uuid.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 class ChildrenQr extends StatefulWidget {
@@ -12,13 +12,20 @@ class ChildrenQr extends StatefulWidget {
 }
 
 class _ChildrenQrState extends State<ChildrenQr> {
-  final _uuid = const Uuid();
   late String qrData;
 
   @override
   void initState() {
     super.initState();
-    qrData = _uuid.v4();
+    _loadQrData();
+  }
+
+  Future<void> _loadQrData() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('token');
+    setState(() {
+      qrData = token!;
+    });
   }
 
   @override
@@ -71,7 +78,7 @@ class _ChildrenQrState extends State<ChildrenQr> {
                   child: Column(
                     children: [
                       const Text(
-                        'Scan the QR code below with parent devices',
+                        'Scan the QR code below with children devices',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w500,
@@ -87,13 +94,6 @@ class _ChildrenQrState extends State<ChildrenQr> {
                         backgroundColor: Colors.white,
                       ),
                       const SizedBox(height: 10),
-                      Text(
-                        'Code: ${qrData.substring(0, 8)}...',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                      ),
                     ],
                   ),
                 ),
