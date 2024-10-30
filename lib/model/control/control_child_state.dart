@@ -24,7 +24,7 @@ class ControlChildState extends ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data == null || data['children'] == null) {
-          throw Exception('Invalid data format received');
+          return;
         }
 
         final List<ChildState> fetchedChildren = [];

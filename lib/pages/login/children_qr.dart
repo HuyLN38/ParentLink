@@ -255,6 +255,7 @@ class _ScanCodePageState extends State<ScanCodePage> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('parentId', qr);
         await prefs.setString('token', requestBody['childId']);
         await prefs.setString('role', 'children');
         if (context.mounted) {
@@ -314,8 +315,6 @@ class _ScanCodePageState extends State<ScanCodePage> {
           );
         }
       } else {
-        print(response.body);
-        print(response.statusCode);
         if (context.mounted) {
           showDialog(
             context: context,

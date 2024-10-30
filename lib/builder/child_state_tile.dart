@@ -6,12 +6,21 @@ import 'package:parent_link/pages/home/location_page.dart';
 import 'package:parent_link/theme/app.theme.dart';
 
 class ChildStateTile extends StatelessWidget {
-  final ChildState childState;
+  final ChildState? childState; // Make childState nullable
   final int index;
   ChildStateTile({super.key, required this.childState, required this.index});
 
   @override
   Widget build(BuildContext context) {
+    if (childState == null) {
+      return const Center(
+        child: Text(
+          'No child available',
+          style: TextStyle(fontSize: 20, color: Colors.red),
+        ),
+      );
+    }
+
     List<Color> backgroundColor = [
       const Color(0xffD6EBE8),
       const Color(0xffFCA92D),
@@ -27,7 +36,7 @@ class ChildStateTile extends StatelessWidget {
         onTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => LocationPage(childState: childState),
+            builder: (context) => LocationPage(childState: childState!),
           ),
         ),
         child: Container(
@@ -61,8 +70,8 @@ class ChildStateTile extends StatelessWidget {
                       ),
                       child: CircleAvatar(
                         radius: 35,
-                        backgroundImage: childState.avatarPath != null
-                            ? FileImage(File(childState.avatarPath!))
+                        backgroundImage: childState!.avatarPath != null
+                            ? FileImage(File(childState!.avatarPath!))
                             : AssetImage(ChildState.defaultImage)
                                 as ImageProvider,
                       ),
@@ -74,12 +83,12 @@ class ChildStateTile extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          childState.name,
+                          childState!.name,
                           style: const TextStyle(fontSize: 20),
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          childState.activity,
+                          childState!.activity,
                           style: const TextStyle(fontSize: 16),
                         ),
                         const SizedBox(height: 10),
@@ -90,16 +99,16 @@ class ChildStateTile extends StatelessWidget {
                           children: [
                             _buildStatusContainer(
                               icon: Icons.turn_right,
-                              text: "${childState.distance}m",
+                              text: "${childState!.distance}m",
                             ),
                             const SizedBox(width: 8),
                             _buildStatusContainer(
-                              icon: _getBatteryIcon(childState.battery),
-                              text: "${childState.battery}%",
+                              icon: _getBatteryIcon(childState!.battery),
+                              text: "${childState!.battery}%",
                             ),
                             const SizedBox(width: 8),
                             _buildStatusContainer(
-                              text: childState.state,
+                              text: childState!.state,
                             ),
                           ],
                         ),
