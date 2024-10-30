@@ -42,6 +42,7 @@ func UpdateChildLocation(c *gin.Context) {
 		Longitude float64 `json:"longitude" binding:"required"`
 		Latitude  float64 `json:"latitude" binding:"required"`
 		Speed     float64 `json:"speed" binding:"required"`
+		Battery   int     `json:"battery" binding:"required"`
 	}
 
 	var req LocationRequest
@@ -50,8 +51,8 @@ func UpdateChildLocation(c *gin.Context) {
 		return
 	}
 
-	query := `UPDATE children SET longitude=$1, latitude=$2, speed=$3, last_seen=NOW() WHERE static_id=$4 AND child_id=$5`
-	_, err := db.Exec(context.Background(), query, req.Longitude, req.Latitude, req.Speed, staticID, childID)
+	query := `UPDATE children SET longitude=$1, latitude=$2, speed=$3, battery=$4, last_seen=NOW() WHERE static_id=$5 AND child_id=$6`
+	_, err := db.Exec(context.Background(), query, req.Longitude, req.Latitude, req.Speed, req.Battery, staticID, childID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update child location"})
 		return
