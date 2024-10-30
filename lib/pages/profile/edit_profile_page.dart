@@ -1,4 +1,3 @@
-import 'package:animator/animator.dart';
 import 'package:flutter/material.dart';
 import 'package:parent_link/theme/app.theme.dart';
 

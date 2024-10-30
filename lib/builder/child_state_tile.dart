@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:parent_link/model/child_state.dart';
 import 'package:parent_link/pages/home/location_page.dart';
@@ -10,39 +12,37 @@ class ChildStateTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    List <Color>  backgroundColor = [
+    List<Color> backgroundColor = [
       const Color(0xffD6EBE8),
       const Color(0xffFCA92D),
       const Color(0xffE4E7F2),
-
     ];
-  Color background = backgroundColor[index % backgroundColor.length];
+    Color background = backgroundColor[index % backgroundColor.length];
 
     return Positioned(
-     top: (150 * index).toDouble(),
-     left: 0,
-     right: 0,
+      top: (150 * index).toDouble(),
+      left: 0,
+      right: 0,
       child: GestureDetector(
-        onTap: () =>Navigator.push(
-                  context, 
-                  MaterialPageRoute(
-                    builder: (context) => LocationPage(childState: childState,))), 
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => LocationPage(childState: childState),
+          ),
+        ),
         child: Container(
           decoration: BoxDecoration(
-          gradient:  LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            stops: [0.0, 0.7],
-            colors: [
-              background.withOpacity(1),
-              background.withOpacity(0.5)
-            ],
-        ),
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              stops: [0.0, 0.7],
+              colors: [background.withOpacity(1), background.withOpacity(0.5)],
+            ),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: Apptheme.colors.white,
-              width: 1
-            )
+              width: 1,
+            ),
           ),
           child: Stack(
             children: [
@@ -61,11 +61,14 @@ class ChildStateTile extends StatelessWidget {
                       ),
                       child: CircleAvatar(
                         radius: 35,
-                        backgroundImage: AssetImage(childState.image,),
+                        backgroundImage: childState.avatarPath != null
+                            ? FileImage(File(childState.avatarPath!))
+                            : AssetImage(ChildState.defaultImage)
+                                as ImageProvider,
                       ),
                     ),
                     const SizedBox(width: 35), // Use SizedBox for spacing
-        
+
                     // Child's info
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -75,12 +78,12 @@ class ChildStateTile extends StatelessWidget {
                           style: const TextStyle(fontSize: 20),
                         ),
                         const SizedBox(height: 2),
-                         Text(
+                        Text(
                           childState.activity,
                           style: const TextStyle(fontSize: 16),
                         ),
                         const SizedBox(height: 10),
-                
+
                         // Status indicators
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -91,7 +94,7 @@ class ChildStateTile extends StatelessWidget {
                             ),
                             const SizedBox(width: 8),
                             _buildStatusContainer(
-                              icon: _getBatteryIcon(childState.battery),                          
+                              icon: _getBatteryIcon(childState.battery),
                               text: "${childState.battery}%",
                             ),
                             const SizedBox(width: 8),
@@ -109,8 +112,7 @@ class ChildStateTile extends StatelessWidget {
                 alignment: Alignment.topRight,
                 child: IconButton(
                   icon: const Icon(Icons.more_horiz),
-                  onPressed: () {
-                  },
+                  onPressed: () {},
                 ),
               ),
             ],
@@ -144,7 +146,7 @@ class ChildStateTile extends StatelessWidget {
     );
   }
 
-    // Helper method to get battery icon based on battery percentage
+  // Helper method to get battery icon based on battery percentage
   IconData _getBatteryIcon(int battery) {
     if (battery >= 90) {
       return Icons.battery_full;

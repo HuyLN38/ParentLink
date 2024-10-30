@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart'; //mapbox, not flutter map XD
-import 'dart:io';
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
@@ -52,16 +51,13 @@ class _MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: MapWidget(
-        key: const ValueKey("mapWidget"),
-        // styleUri: MapboxStyles.MAPBOX_STREETS,
-
-        textureView: true,
-        onMapCreated: _onMapCreated,
-        cameraOptions: _cameraOptions,
-        //if above _onMapCreated an URI has already been set, there is no need to set it here
-
-        // styleUri: MapboxStyles.DARK,
+      body: SafeArea(
+        child: MapWidget(
+          key: const ValueKey("mapWidget"),
+          textureView: true,
+          onMapCreated: _onMapCreated,
+          cameraOptions: _cameraOptions,
+        ),
       ),
     );
   }
