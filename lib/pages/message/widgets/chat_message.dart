@@ -4,6 +4,7 @@ import 'package:parent_link/model/message.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:parent_link/helper/uuid.dart' as globals;
 import 'package:flutter/widgets.dart';
 import 'package:parent_link/pages/message/widgets/meassage_bubble.dart';
 
@@ -33,7 +34,6 @@ class _ChatMessagesState extends State<ChatMessages> {
 
   @override
   Widget build(BuildContext context) {
-    final authenicatedUser = FirebaseAuth.instance.currentUser!;
     List<Message> _list = [];
 
     return StreamBuilder(
@@ -86,14 +86,14 @@ class _ChatMessagesState extends State<ChatMessages> {
             if (nextUserIsSame) {
               return MessageBubble.next(
                 message: chatMessage,
-                isMe: Apis.user.uid == currentMessageUserId,
+                isMe: globals.token == currentMessageUserId,
               );
             } else {
               return MessageBubble.first(
                 // userImage: chatMessage['userImage'],
                 // username: chatMessage['username'],
                 message: chatMessage,
-                isMe: Apis.user.uid == currentMessageUserId,
+                isMe: globals.token == currentMessageUserId,
               );
             }
           },

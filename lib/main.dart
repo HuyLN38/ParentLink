@@ -1,20 +1,27 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:parent_link/firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
-import 'package:parent_link/model/control/control_child_location.dart';
-import 'package:parent_link/model/control/control_child_state.dart';
+import 'package:parent_link/pages/open_page.dart';
+import 'package:parent_link/pages/main_page.dart';
 import 'package:parent_link/routes/routes.dart';
 import 'package:provider/provider.dart';
-import 'package:parent_link/pages/open_page.dart';
-import 'package:parent_link/pages/main_page.dart'; // Import your MainPage
-import 'package:shared_preferences/shared_preferences.dart'; // Add this import for SharedPreferences
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:parent_link/helper/uuid.dart' as globals;
+
+import 'firebase_options.dart';
+import 'model/control/control_child_location.dart';
+import 'model/control/control_child_state.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  globals.token = prefs.getString('token');
+  print(globals.token);
+
   runApp(const MyApp());
 }
 

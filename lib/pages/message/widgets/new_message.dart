@@ -4,6 +4,7 @@ import 'package:parent_link/api/apis.dart';
 import 'package:parent_link/model/chat_user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:parent_link/helper/uuid.dart' as globals;
 import 'package:parent_link/model/message.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -39,14 +40,14 @@ class _NewMessageState extends State<NewMessage> {
     try {
       // final user = FirebaseAuth.instance.currentUser!;
       final userData =
-          await Apis.firestore.collection('users').doc(Apis.user.uid).get();
+          await Apis.firestore.collection('users').doc(globals.token).get();
 
       // Check if it's the first message by checking if the user exists in 'my_users' collection
       final myUsersSnapshot = await Apis.firestore
           .collection('users')
           .doc(widget.user.id)
           .collection('my_users')
-          .doc(Apis.user.uid)
+          .doc(globals.token)
           .get();
       log('First message exists: ${myUsersSnapshot.exists}');
 

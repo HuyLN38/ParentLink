@@ -9,7 +9,8 @@ import 'package:parent_link/pages/message/screens/home.dart';
 import 'package:parent_link/pages/profile/profile_page.dart';
 import 'package:parent_link/pages/map_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/BackgroundService.dart'; // Import the background service
+import '../services/BackgroundService.dart'; // Import the
+import 'package:parent_link/helper/uuid.dart' as globals; // background service
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -19,17 +20,8 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  //this selected index is to control the bottome nav bar
+  //this selected index is to control the bottom nav bar
   int _selectedIndex = 0;
-
-  // this method will update our selected index
-  // when the user tags on the bottom bar
-  void navigateBottom(int index) {
-    if (Apis.auth.currentUser != null) {
-      log(Apis.auth.currentUser!.uid);
-    } else {
-      log('No user logged in');
-    }
 
   late Future<List<Widget>> _pagesFuture;
   String? _role;
@@ -39,18 +31,18 @@ class _MainPageState extends State<MainPage> {
   @override
   void initState() {
     super.initState();
-    _pagesFuture = _loadPages();
+    _pagesFuture = loadPages();
     _startBackgroundServiceIfNeeded(); // Start the background service if needed
   }
 
-  Future<List<Widget>> _loadPages() async {
+  Future<List<Widget>> loadPages() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     _role = prefs.getString('role');
     if (_role == 'parent') {
       return [
         const HomePage(),
         const MapPage(),
-        const MessagePage(),
+        const HomeScreen(),
         const ProfilePage(),
       ];
     } else {
@@ -69,7 +61,15 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
+  // this method will update our selected index
+  // when the user tags on the bottom bar
   void navigateBottom(int index) {
+    if (globals.token != null) {
+      log(globals.token!);
+    } else {
+      log('No user logged in');
+    }
+
     setState(() {
       _selectedIndex = index;
     });

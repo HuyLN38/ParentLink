@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:parent_link/helper/uuid.dart' as globals;
 import 'dart:io';
 
 import 'package:parent_link/api/notification_access_token.dart';
@@ -10,18 +11,19 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:http/http.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../helper/uuid.dart';
 
 class Apis {
-  static FirebaseAuth auth = FirebaseAuth.instance;
-
   static FirebaseFirestore firestore = FirebaseFirestore.instance;
-
   static FirebaseStorage storage = FirebaseStorage.instance;
-
   static FirebaseMessaging messaging = FirebaseMessaging.instance;
 
   static Future<void> getFirebaseMessagingToken() async {
     await messaging.requestPermission();
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    globals.token = prefs.getString('token');
 
     await messaging.getToken().then((t) {
       if (t != null) {
@@ -96,16 +98,14 @@ class Apis {
     }
   }
 
-  static User get user => auth.currentUser!;
-
   static late ChatUser me;
 
   static Future<bool> userExists() async {
-    return (await firestore.collection('users').doc(user.uid).get()).exists;
+    return (await firestore.collection('users').doc(token).get()).exists;
   }
 
   static Future<void> getSelfInfo() async {
-    await firestore.collection('users').doc(user.uid).get().then(
+    await firestore.collection('users').doc(token).get().then(
       (user) {
         if (user.exists) {
           me = ChatUser.fromJson(user.data()!);
@@ -124,7 +124,7 @@ class Apis {
   }
 
   static Future<void> updateActiveStatus(bool isOnline) async {
-    firestore.collection('users').doc(user.uid).update({
+    firestore.collection('users').doc(token).update({
       'is_online': isOnline,
       'last_active': DateTime.now().microsecondsSinceEpoch.toString(),
       'push_token': me.pushToken,
@@ -135,7 +135,7 @@ class Apis {
       String useremail, String imageURL) async {
     final time = Timestamp.now().microsecondsSinceEpoch.toString();
     final chatUser = ChatUser(
-        id: user.uid,
+        id: token,
         name: username,
         email: useremail,
         about: "I'm using Chat Web",
@@ -159,9 +159,8 @@ class Apis {
         .snapshots();
   }
 
-  static String getConversationID(String id) => user.uid.hashCode <= id.hashCode
-      ? '${user.uid}_$id'
-      : '${id}_${user.uid}';
+  static String getConversationID(String id) =>
+      token.hashCode <= id.hashCode ? '${token}_$id' : '${id}_${token}';
 
   static Stream<QuerySnapshot<Map<String, dynamic>>> getAllMessages(
       ChatUser user) {
@@ -182,7 +181,7 @@ class Apis {
         msg: msg,
         read: '',
         type: type,
-        fromId: user.uid,
+        fromId: token,
         userImage: userImage,
         userName: userName,
         sent: time);
@@ -203,7 +202,7 @@ class Apis {
   }
 
   static Future<void> sendChatImage(ChatUser chatUser, File file) async {
-    final userData = await firestore.collection('users').doc(user.uid).get();
+    final userData = await firestore.collection('users').doc(token).get();
     //getting image file extension
     final ext = file.path.split('.').last;
 
@@ -233,14 +232,14 @@ class Apis {
 
     log('data: ${data.docs}');
 
-    if (data.docs.isNotEmpty && data.docs.first.id != user.uid) {
+    if (data.docs.isNotEmpty && data.docs.first.id != token) {
       //user exists
 
       log('user exists: ${data.docs.first.data()}');
 
       firestore
           .collection('users')
-          .doc(user.uid)
+          .doc(token)
           .collection('my_users')
           .doc(data.docs.first.id)
           .set({});
@@ -255,9 +254,10 @@ class Apis {
 
   // for getting id's of known users from firestore database
   static Stream<QuerySnapshot<Map<String, dynamic>>> getMyUsersId() {
+    print(globals.token);
     return firestore
         .collection('users')
-        .doc(user.uid)
+        .doc(globals.token)
         .collection('my_users')
         .snapshots();
   }
@@ -275,12 +275,12 @@ class Apis {
   // for adding an user to my user when first message is send
   static Future<void> sendFirstMessage(
       ChatUser chatUser, String msg, Type type) async {
-    final userData = await firestore.collection('users').doc(user.uid).get();
+    final userData = await firestore.collection('users').doc(token).get();
     await firestore
         .collection('users')
         .doc(chatUser.id)
         .collection('my_users')
-        .doc(user.uid)
+        .doc(token)
         .set({}).then((value) => sendMessage(
             chatUser, msg, type, userData['image'], userData['name']));
   }

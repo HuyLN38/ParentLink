@@ -6,7 +6,7 @@ import 'package:parent_link/theme/app.theme.dart';
 import 'package:parent_link/pages/login/handlers/AuthServices.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-final _firebase = Apis.auth;
+// final _firebase = Apis.auth;
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -32,8 +32,8 @@ class _LoginPageState extends State<LoginPage> {
     final email = _emailController.text;
     final password = _passwordController.text;
     final result = await _authService.login(email, password);
-    final userCredentials = await _firebase.signInWithEmailAndPassword(
-            email: email, password: password);
+    // final userCredentials = await _firebase.signInWithEmailAndPassword(
+    //         email: email, password: password);
 
     if (result.containsKey('error')) {
       setState(() {

@@ -1,6 +1,6 @@
 import 'package:parent_link/api/apis.dart';
+import 'package:parent_link/helper/uuid.dart' as globals;
 import 'package:parent_link/model/chat_user.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -27,7 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
     Apis.updateActiveStatus(true);
     SystemChannels.lifecycle.setMessageHandler(
       (message) {
-        if (Apis.auth.currentUser != null) {
+        if (globals.token != null) {
           if (message.toString().contains('resume')) {
             Apis.updateActiveStatus(true);
           } else {
