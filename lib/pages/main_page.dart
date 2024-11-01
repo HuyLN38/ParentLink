@@ -1,11 +1,14 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:parent_link/api/apis.dart';
 import 'package:parent_link/components/bottom_bar.dart';
 import 'package:parent_link/pages/home/home_page.dart';
 import 'package:parent_link/pages/message/message_page.dart';
+import 'package:parent_link/pages/message/screens/home.dart';
 import 'package:parent_link/pages/profile/profile_page.dart';
 import 'package:parent_link/pages/map_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import '../services/BackgroundService.dart'; // Import the background service
 
 class MainPage extends StatefulWidget {
@@ -16,7 +19,18 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
+  //this selected index is to control the bottome nav bar
   int _selectedIndex = 0;
+
+  // this method will update our selected index
+  // when the user tags on the bottom bar
+  void navigateBottom(int index) {
+    if (Apis.auth.currentUser != null) {
+      log(Apis.auth.currentUser!.uid);
+    } else {
+      log('No user logged in');
+    }
+
   late Future<List<Widget>> _pagesFuture;
   String? _role;
   final BackgroundService _backgroundService =
