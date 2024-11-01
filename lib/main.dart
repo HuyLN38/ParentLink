@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:parent_link/firebase_options.dart';
+import 'package:flutter/services.dart';
 import 'package:parent_link/model/control/control_child_location.dart';
 import 'package:parent_link/model/control/control_child_state.dart';
 import 'package:parent_link/routes/routes.dart';
@@ -29,6 +30,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // Transparent status bar
+      statusBarIconBrightness: Brightness.dark,
+    ));
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ControlChildState()),
