@@ -17,8 +17,7 @@ class ChatUser {
       this.isOnline,
       this.lastActive,
       this.id,
-      this.pushToken,
-      this.email});
+      this.pushToken});
 
   ChatUser.fromJson(Map<String, dynamic> json) {
     image = json['image'];
@@ -29,7 +28,6 @@ class ChatUser {
     lastActive = json['last_active'];
     id = json['localId'];
     pushToken = json['push_token'];
-    email = json['email'];
   }
 
   Map<String, dynamic> toJson() {
@@ -42,7 +40,6 @@ class ChatUser {
     data['last_active'] = this.lastActive;
     data['localId'] = this.id;
     data['push_token'] = this.pushToken;
-    data['email'] = this.email;
     return data;
   }
 }

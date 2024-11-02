@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:parent_link/api/apis.dart';
 import 'package:parent_link/helper/uuid.dart' as globals;
 import 'package:parent_link/model/chat_user.dart';
@@ -85,9 +87,12 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               CircleAvatar(
                                 radius: 25,
-                                backgroundImage: Apis.me.image != null &&
-                                        Apis.me.image!.isNotEmpty
-                                    ? NetworkImage(Apis.me.image!)
+                                backgroundImage: (Apis.me.image != null &&
+                                        Apis.me.image!.isNotEmpty &&
+                                        Apis.me.image !=
+                                            'assets/img/avatar_mom.png')
+                                    ? FileImage(File(Apis.AvatarPath))
+                                        as ImageProvider
                                     : const AssetImage(
                                             'assets/img/avatar_mom.png')
                                         as ImageProvider,

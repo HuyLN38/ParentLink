@@ -72,7 +72,7 @@ class ChildStateTile extends StatelessWidget {
                         radius: 35,
                         backgroundImage: childState!.avatarPath != null
                             ? FileImage(File(childState!.avatarPath!))
-                            : AssetImage(ChildState.defaultImage)
+                            : const AssetImage(ChildState.defaultImage)
                                 as ImageProvider,
                       ),
                     ),

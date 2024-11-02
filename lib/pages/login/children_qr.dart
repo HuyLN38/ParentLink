@@ -3,11 +3,14 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:image/image.dart' as img;
+import 'package:parent_link/api/apis.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import '../message/screens/home.dart' as home;
 
 // Add this class at the top level, before ScanCodePage
 class ScannerOverlay extends StatefulWidget {
@@ -231,6 +234,15 @@ class _ScanCodePageState extends State<ScanCodePage> {
     }
   }
 
+  static Future<Directory> get _localDir async {
+    final directory = await getApplicationDocumentsDirectory();
+    final avatarDir = Directory('${directory.path}/avatars');
+    if (!await avatarDir.exists()) {
+      await avatarDir.create(recursive: true);
+    }
+    return avatarDir;
+  }
+
   Future<void> submitChildData(String qr) async {
     if (!_isFormValid) return;
 
@@ -254,10 +266,18 @@ class _ScanCodePageState extends State<ScanCodePage> {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
+        final directory = await _localDir;
         final prefs = await SharedPreferences.getInstance();
+
         await prefs.setString('parentId', qr);
         await prefs.setString('token', requestBody['childId']);
         await prefs.setString('role', 'children');
+        print("FUCKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK");
+        await Apis.createUser(requestBody['childId'], _nameController.text,
+            '${directory.path}/${requestBody['childId']}.jpg');
+        await Apis.addChatUserById(qr);
+        await Apis.addChatUserById(qr);
+
         if (context.mounted) {
           showDialog(
             context: context,

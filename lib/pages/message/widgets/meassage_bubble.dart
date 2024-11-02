@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:parent_link/api/apis.dart';
 import 'package:parent_link/helper/my_date_util.dart';
 import 'package:parent_link/model/message.dart';
@@ -58,9 +60,10 @@ class MessageBubble extends StatelessWidget {
             // Align user image to the right, if the message is from me.
             right: isMe ? 0 : null,
             child: CircleAvatar(
-              backgroundImage: NetworkImage(
-                message.userImage!,
-              ),
+              backgroundImage: message.userImage! != 'assets/img/avatar_mom.png'
+                  ? FileImage(File(message.userImage!))
+                  : const AssetImage('assets/img/avatar_mom.png')
+                      as ImageProvider,
               backgroundColor: theme.colorScheme.primary.withAlpha(180),
               radius: 23,
             ),
@@ -161,7 +164,8 @@ class MessageBubble extends StatelessWidget {
                                 child: Image.network(
                                   message.msg!,
                                   fit: BoxFit.cover,
-                                  loadingBuilder: (context, child, loadingProgress) {
+                                  loadingBuilder:
+                                      (context, child, loadingProgress) {
                                     if (loadingProgress == null) {
                                       return child;
                                     } else {

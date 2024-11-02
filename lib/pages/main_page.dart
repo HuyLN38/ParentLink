@@ -47,7 +47,7 @@ class _MainPageState extends State<MainPage> {
       ];
     } else {
       return [
-        const MessagePage(),
+        const HomeScreen(),
         const ProfilePage(),
       ];
     }

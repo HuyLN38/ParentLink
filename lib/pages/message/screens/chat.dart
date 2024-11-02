@@ -1,7 +1,8 @@
+import 'dart:io';
+
 import 'package:parent_link/api/apis.dart';
 import 'package:parent_link/helper/my_date_util.dart';
 import 'package:parent_link/model/chat_user.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:parent_link/pages/message/widgets/chat_message.dart';
 import 'package:parent_link/pages/message/widgets/new_message.dart';
@@ -56,11 +57,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
           final data = snapshot.data!.docs;
           final list = data
-                  .map(
-                    (e) => ChatUser.fromJson(e.data()),
-                  )
-                  .toList() ??
-              [];
+              .map(
+                (e) => ChatUser.fromJson(e.data()),
+              )
+              .toList();
 
           return Row(
             children: [
@@ -69,9 +69,10 @@ class _ChatScreenState extends State<ChatScreen> {
                 icon: const Icon(Icons.arrow_back_ios_new),
               ),
               CircleAvatar(
-                backgroundImage: widget.user.image != null
-                    ? NetworkImage(widget.user.image!)
-                    : null,
+                backgroundImage:
+                    widget.user.image != 'assets/img/avatar_mom.png'
+                        ? FileImage(File(widget.user.image!))
+                        : const AssetImage('assets/img/avatar_mom.png'),
                 child: widget.user.image != null
                     ? null
                     : const Icon(Icons.person_3_sharp),

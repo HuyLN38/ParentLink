@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:parent_link/helper/uuid.dart' as globals;
-import 'package:flutter/widgets.dart';
 import 'package:parent_link/pages/message/widgets/meassage_bubble.dart';
 
 class ChatMessages extends StatefulWidget {

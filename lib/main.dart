@@ -1,6 +1,8 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:parent_link/pages/open_page.dart';
 import 'package:parent_link/pages/main_page.dart';
 import 'package:parent_link/routes/routes.dart';
@@ -14,16 +16,28 @@ import 'model/control/control_child_state.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+
+  await flutterLocalNotificationsPlugin
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
+      ?.createNotificationChannel(channel);
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
   SharedPreferences prefs = await SharedPreferences.getInstance();
   globals.token = prefs.getString('token');
-  print(globals.token);
 
   runApp(const MyApp());
 }
+
+const AndroidNotificationChannel channel = AndroidNotificationChannel(
+  'chats', // id
+  'High Importance Notifications', // titledescription
+  importance: Importance.max,
+);
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

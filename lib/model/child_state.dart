@@ -1,4 +1,4 @@
-import 'avatar_manager.dart';
+import '../helper/avatar_manager.dart';
 
 class ChildState {
   final String name;

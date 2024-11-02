@@ -29,7 +29,7 @@ class _NewMessageState extends State<NewMessage> {
   }
 
   void _submitMessage() async {
-    final enteredMessage = _messageController.text;
+    final enteredMessage = _messageController.text.trim();
     _messageController.clear();
     FocusScope.of(context).unfocus();
 
@@ -138,7 +138,7 @@ class _NewMessageState extends State<NewMessage> {
                   color: Colors.blueAccent,
                 )),
             IconButton(
-              color: Theme.of(context).colorScheme.primary,
+              color: Colors.blueAccent,
               onPressed: _submitMessage,
               icon: const Icon(Icons.send),
             ),

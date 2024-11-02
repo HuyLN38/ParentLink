@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:parent_link/api/apis.dart';
 import 'package:parent_link/model/chat_user.dart';
 import 'package:parent_link/model/message.dart';
@@ -49,9 +51,10 @@ class _ChatUserCardState extends State<ChatUserCard> {
 
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundImage: widget.user.image != null
-                      ? NetworkImage(widget.user.image!)
-                      : null,
+                  backgroundImage:
+                      widget.user.image != 'assets/img/avatar_mom.png'
+                          ? FileImage(File(widget.user.image!))
+                          : const AssetImage('assets/img/avatar_mom.png'),
                   child: widget.user.image != null
                       ? null
                       : const Icon(Icons.person_3_sharp),

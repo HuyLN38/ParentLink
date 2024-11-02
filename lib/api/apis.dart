@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:parent_link/helper/uuid.dart' as globals;
+import '../helper/avatar_manager.dart';
 import 'dart:io';
 
 import 'package:parent_link/api/notification_access_token.dart';
 import 'package:parent_link/model/chat_user.dart';
 import 'package:parent_link/model/message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:http/http.dart';
@@ -19,6 +19,7 @@ class Apis {
   static FirebaseFirestore firestore = FirebaseFirestore.instance;
   static FirebaseStorage storage = FirebaseStorage.instance;
   static FirebaseMessaging messaging = FirebaseMessaging.instance;
+  static AvatarManager avatarManager = AvatarManager();
 
   static Future<void> getFirebaseMessagingToken() async {
     await messaging.requestPermission();
@@ -99,6 +100,7 @@ class Apis {
   }
 
   static late ChatUser me;
+  static late String AvatarPath;
 
   static Future<bool> userExists() async {
     return (await firestore.collection('users').doc(token).get()).exists;
@@ -109,6 +111,7 @@ class Apis {
       (user) {
         if (user.exists) {
           me = ChatUser.fromJson(user.data()!);
+          AvatarPath = me.image!;
           getFirebaseMessagingToken();
         } else {}
       },
@@ -131,32 +134,47 @@ class Apis {
     });
   }
 
-  static Future<void> createUser(User userCurrent, String username,
-      String useremail, String imageURL) async {
+  static Future<void> createUser(
+      String uuid, String username, String imageURL) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    String? parentid = sharedPreferences.getString('parentId');
     final time = Timestamp.now().microsecondsSinceEpoch.toString();
     final chatUser = ChatUser(
-        id: token,
+        id: uuid,
         name: username,
-        email: useremail,
         about: "I'm using Chat Web",
         createdAt: time,
-        image: imageURL,
+        image: await AvatarManager.getOrUpdateAvatar(
+            uuid,
+            'https://huyln.info/parentlink/users/$parentid/children-avatar/$uuid',
+            "0"),
         isOnline: false,
         lastActive: time,
         pushToken: '');
-    return await firestore
-        .collection('users')
-        .doc(userCurrent.uid)
-        .set(chatUser.toJson());
+    return await firestore.collection('users').doc(uuid).set(chatUser.toJson());
   }
 
   static Stream<QuerySnapshot<Map<String, dynamic>>> getAllUser(
       List<String> userIds) {
-    return firestore
+    Stream<QuerySnapshot<Map<String, dynamic>>> ids = firestore
         .collection('users')
         .where('localId', whereIn: userIds)
-        // .where('id', isNotEqualTo: user.uid)
         .snapshots();
+
+    SharedPreferences.getInstance().then((prefs) {
+      for (var id in userIds) {
+        try {
+          AvatarManager.getOrUpdateAvatar(
+              id,
+              'https://huyln.info/parentlink/users/${me.id}/children-avatar/$id',
+              (prefs.getString('avatar_last_modified_$id') ?? '0'));
+        } catch (e) {
+          log('Error getting avatar: $e');
+        }
+      }
+    });
+
+    return ids;
   }
 
   static String getConversationID(String id) =>
@@ -225,6 +243,10 @@ class Apis {
 
   // Add an chat user for conversation
   static Future<bool> addChatUserById(String userID) async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    String? token = sharedPreferences.getString('token');
+    String? role = sharedPreferences.getString('role');
+
     final data = await firestore
         .collection('users')
         .where('localId', isEqualTo: userID)
@@ -244,9 +266,19 @@ class Apis {
           .doc(data.docs.first.id)
           .set({});
 
+      if (role == 'children') {
+        firestore
+            .collection('users')
+            .doc(userID)
+            .collection('my_users')
+            .doc(token)
+            .set({});
+      }
+
       return true;
     } else {
-      //user doesn't exists
+      print(
+          "User not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not foundUser not found");
 
       return false;
     }
@@ -275,12 +307,13 @@ class Apis {
   // for adding an user to my user when first message is send
   static Future<void> sendFirstMessage(
       ChatUser chatUser, String msg, Type type) async {
-    final userData = await firestore.collection('users').doc(token).get();
+    final userData =
+        await firestore.collection('users').doc(globals.token).get();
     await firestore
         .collection('users')
         .doc(chatUser.id)
         .collection('my_users')
-        .doc(token)
+        .doc(globals.token)
         .set({}).then((value) => sendMessage(
             chatUser, msg, type, userData['image'], userData['name']));
   }
