@@ -16,8 +16,11 @@ class ChildrenService {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      List<dynamic> childrenJson = data['children'];
-      return childrenJson.map((json) => Child.fromJson(json)).toList();
+      List<Child> children = (data['children'] as List<dynamic>?)?.map((childJson) => Child.fromJson(childJson))
+          .toList() ?? [];
+      // List<dynamic> childrenJson = data['children'];
+      // return childrenJson.map((json) => Child.fromJson(json)).toList();
+      return children;
     } else {
       throw Exception('Failed to load children');
     }

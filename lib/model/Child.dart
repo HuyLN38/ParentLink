@@ -8,8 +8,8 @@ class Child {
   final String phone;
   final double longitude;
   final double latitude;
-  final int speed;
-  final int battery;
+  // final double speed;
+  // final int battery;
 
   Child({
     required this.childId,
@@ -20,8 +20,8 @@ class Child {
     required this.phone,
     required this.longitude,
     required this.latitude,
-    required this.speed,
-    required this.battery,
+    // required this.speed,
+    // required this.battery,
   });
 
   factory Child.fromJson(Map<String, dynamic> json) {
@@ -34,8 +34,8 @@ class Child {
       phone: json['phone'],
       longitude: json['longitude'],
       latitude: json['latitude'],
-      speed: json['speed'],
-      battery: json['battery'],
+      // speed: json['speed'],
+      // battery: json['battery'],
     );
   }
 }
