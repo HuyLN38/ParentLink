@@ -1,4 +1,6 @@
- import 'package:flutter/material.dart';
+ import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
 import 'package:parent_link/model/Child.dart';
@@ -22,33 +24,8 @@ class _MapPageState extends State<MapPage> {
   CircleAnnotationManager? _circleAnnotationManager;
   late final ChildrenService _childrenService;
   List<Child> children = [];
-  // List<Child> hardcodedChildren = [
-  //   Child(
-  //     childId: '1',
-  //     name: 'Child 1',
-  //     birthday: '2004-08-03T00:00:00Z',
-  //     lastModified: '2024-11-03T02:07:54.969393Z',
-  //     lastSeen: '2024-11-03T04:03:25.238858Z',
-  //     phone: '0886058834',
-  //     longitude: 105.707667,
-  //     latitude: 21.0882,
-  //     speed: 1,
-  //     battery: 0,
-  //   ),
-  //   Child(
-  //     childId: '2',
-  //     name: 'Child 2',
-  //     birthday: '2004-08-03T00:00:00Z',
-  //     lastModified: '2024-11-03T02:07:54.969393Z',
-  //     lastSeen: '2024-11-03T04:03:25.238858Z',
-  //     phone: '0886058834',
-  //     longitude: 106.68028,
-  //     latitude: 20.86194,
-  //     speed: 1,
-  //     battery: 0,
-  //   ),
-  //   // Add more hardcoded children as needed
-  // ];
+  Timer? _timer;
+
   //onMapCreated
   void _onMapCreated(MapboxMap mapboxMap) {
     // mapboxMap.clearData();
@@ -86,6 +63,7 @@ class _MapPageState extends State<MapPage> {
       }
     });
   }
+
   @override
   void initState() {
     super.initState();
@@ -104,8 +82,15 @@ class _MapPageState extends State<MapPage> {
       zoom: 12.0,
     );
     // _fetchAndDisplayChildren();
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      _fetchAndDisplayChildren();
+    });
   }
-
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
   void _fetchAndDisplayChildren() async {
     try {
       SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -134,49 +119,3 @@ class _MapPageState extends State<MapPage> {
   }
 }
 
-
-//old
-// @override
-// Widget build(BuildContext context) {
-//  return Scaffold(
-//     body: FlutterMap(
-//       mapController: mapController,
-//       options: MapOptions(
-//         initialCenter: const LatLng(21.048031, 105.800886),
-//         initialZoom: 13.0,
-//         minZoom: 5.0,
-//         maxZoom: 18.0,
-//         keepAlive: true,
-//         onTap: (tapPosition, point) {
-//           print('Tapped at $point');
-//         },
-//       ),
-//       children: [
-//         TileLayer(
-//           urlTemplate:
-//           "https://api.mapbox.com/styles/v1/giangguot3/cm291zk5y00e101pi9rhj34ly/tiles/256/{z}/{x}/{y}@2x?access_token=pk.eyJ1IjoiZ2lhbmdndW90MyIsImEiOiJjbTF5YnZtam4xNWN6MnFxMTdrdGd1bHpjIn0.fCi-Oaqy9w4MG-5LnTv0IA",
-//           additionalOptions: const {
-//             'accessToken': 'sk.eyJ1IjoiZ2lhbmdndW90MyIsImEiOiJjbTIyc3RuY2gwYmEyMnRwZ2l0bzR2NDN5In0.xEmo_nTtWds2CM1zfp0hUw',
-//             'id':'mapbox.mapbox-streets-v8',
-//           },
-//
-//         ),
-//         MarkerLayer(
-//           markers: [
-//             Marker(point: LatLng(21.047380, 105.807170),
-//                 width: 40,
-//                 height: 40,
-//
-//                 child: Stack(
-//                   alignment: Alignment.center,
-//                   children: [
-//                     Image.asset('assets/img/child1.png')
-//                   ],
-//                 ))
-//           ],
-//         )
-//
-//       ],
-//     ),
-//   );
-// }
