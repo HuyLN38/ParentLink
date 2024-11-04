@@ -4,6 +4,7 @@ import 'package:parent_link/api/apis.dart';
 import 'package:parent_link/helper/my_date_util.dart';
 import 'package:parent_link/model/message.dart';
 import 'package:flutter/material.dart';
+import 'package:parent_link/pages/message/widgets/zoom_image_dialog.dart';
 
 // A MessageBubble for showing a single chat message on the ChatScreen.
 class MessageBubble extends StatelessWidget {
@@ -159,21 +160,32 @@ class MessageBubble extends StatelessWidget {
                                 ),
                                 softWrap: true,
                               )
-                            : ClipRRect(
-                                borderRadius: BorderRadius.circular(15),
-                                child: Image.network(
-                                  message.msg!,
-                                  fit: BoxFit.cover,
-                                  loadingBuilder:
-                                      (context, child, loadingProgress) {
-                                    if (loadingProgress == null) {
-                                      return child;
-                                    } else {
-                                      return const CircularProgressIndicator();
-                                    }
-                                  },
-                                  errorBuilder: (context, error, stackTrace) =>
-                                      const Icon(Icons.error),
+                            : InkWell(
+                                onTap: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (_) => ImageDialog(
+                                      messageImage: message.msg!,
+                                    ),
+                                  );
+                                },
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(15),
+                                  child: Image.network(
+                                    message.msg!,
+                                    fit: BoxFit.cover,
+                                    loadingBuilder:
+                                        (context, child, loadingProgress) {
+                                      if (loadingProgress == null) {
+                                        return child;
+                                      } else {
+                                        return const CircularProgressIndicator();
+                                      }
+                                    },
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const Icon(Icons.error),
+                                  ),
                                 ),
                               ),
                       ),

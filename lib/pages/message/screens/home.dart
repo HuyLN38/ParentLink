@@ -69,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
             elevation: 1,
             leadingWidth: !isSearching ? 200 : null,
             leading: !isSearching
-                ? FutureBuilder(
+                ? FutureBuilder<ChatUser?>(
                     future: Apis.getSelfInfo(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -79,7 +79,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         );
                       } else if (snapshot.hasError) {
                         return const Text('Error loading profile');
+                      } else if (!snapshot.hasData || snapshot.data == null) {
+                        return const Text('User not found');
                       } else {
+                        final user = snapshot.data!;
                         return Padding(
                           padding: const EdgeInsets.only(left: 20),
                           child: Row(
@@ -87,19 +90,18 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               CircleAvatar(
                                 radius: 25,
-                                backgroundImage: (Apis.me.image != null &&
-                                        Apis.me.image!.isNotEmpty &&
-                                        Apis.me.image !=
+                                backgroundImage: (user.image != null &&
+                                        user.image!.isNotEmpty &&
+                                        user.image !=
                                             'assets/img/avatar_mom.png')
                                     ? FileImage(File(Apis.AvatarPath))
-                                        as ImageProvider
                                     : const AssetImage(
                                             'assets/img/avatar_mom.png')
                                         as ImageProvider,
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                Apis.me.name ?? "Fail to display",
+                                user.name ?? "Fail to display",
                                 style: TextStyle(
                                   color: Apptheme.colors.white,
                                   fontWeight: FontWeight.bold,
