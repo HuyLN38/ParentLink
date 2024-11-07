@@ -25,7 +25,26 @@ class _MapPageState extends State<MapPage> {
   late final ChildrenService _childrenService;
   List<Child> children = [];
   Timer? _timer;
+  void _displayRippleEffect(double lat, double lng) {
+    mapboxMap?.annotations.createCircleAnnotationManager().then((manager) async {
+      _circleAnnotationManager = manager;
 
+      Timer.periodic(const Duration(milliseconds: 100), (timer) async {
+        for (var child in children) {
+          final circleOptions = CircleAnnotationOptions(
+            geometry: Point(coordinates: Position(lng, lat)),
+            circleRadius: timer.tick % 20 + 5,
+            circleStrokeColor: Colors.red.value,
+            circleStrokeWidth: 2.0,
+            circleColor: Colors.transparent.value, // Để rỗng bên trong
+          );
+
+          await manager.create(circleOptions);
+
+        }
+      });
+    });
+  }
   //onMapCreated
   void _onMapCreated(MapboxMap mapboxMap) {
     // mapboxMap.clearData();
@@ -60,6 +79,7 @@ class _MapPageState extends State<MapPage> {
         );
 
         await value.create(options);
+        _displayRippleEffect(lat, lng);
       }
     });
   }
