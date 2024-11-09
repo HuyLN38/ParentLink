@@ -32,7 +32,8 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     _pagesFuture = loadPages();
-    _startBackgroundServiceIfNeeded(); // Start the background service if needed
+    _startBackgroundServiceIfNeeded();// Start the background service if needed
+    Apis.getFirebaseMessagingToken(); // get token for message
   }
 
   Future<List<Widget>> loadPages() async {
