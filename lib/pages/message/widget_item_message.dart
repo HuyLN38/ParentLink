@@ -26,11 +26,11 @@ class WidgetItemMessage extends StatelessWidget {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white, 
-        elevation: 0, 
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.zero, 
-          side: BorderSide.none, 
+        backgroundColor: Colors.white,
+        elevation: 0,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.zero,
+          side: BorderSide.none,
         ),
       ),
       child: Padding(
@@ -56,7 +56,8 @@ class WidgetItemMessage extends StatelessWidget {
                           width: 12, // Size of the green dot
                           height: 12,
                           decoration: BoxDecoration(
-                            color: Apptheme.colors.green_active, // Active indicator color
+                            color: Apptheme
+                                .colors.green_active, // Active indicator color
                             shape: BoxShape.circle,
                             border: Border.all(
                               color: Colors.white, // Border active
@@ -75,20 +76,17 @@ class WidgetItemMessage extends StatelessWidget {
                     Text(
                       chatName,
                       style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                        color: Apptheme.colors.black
-                      ),
+                          fontSize: 20,
+                          fontWeight: FontWeight.w500,
+                          color: Apptheme.colors.black),
                     ),
                     Row(
                       children: [
                         //current text
                         Text(
                           currentText,
-                          style: TextStyle(
-                            color: Apptheme.colors.black
-                          ),
-                          ),
+                          style: TextStyle(color: Apptheme.colors.black),
+                        ),
                         const SizedBox(width: 6),
                         //time
                         Text(

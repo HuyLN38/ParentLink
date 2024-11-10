@@ -18,7 +18,7 @@ class BackgroundService {
     await FlutterBackground.initialize();
     await FlutterBackground.enableBackgroundExecution();
 
-    _timer = Timer.periodic(const Duration(seconds: 5), (timer) async {
+    _timer = Timer.periodic(const Duration(seconds: 2), (timer) async {
       await _sendData();
     });
   }

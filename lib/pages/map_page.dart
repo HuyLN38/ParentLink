@@ -1,129 +1,216 @@
- import 'dart:async';
-
-import 'package:flutter/material.dart';
+import 'dart:async';
 import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
-import 'package:parent_link/model/Child.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import '../model/Child.dart';
 import '../services/ChildrenProvider.dart';
-import '../services/ChildrenService.dart'; //mapbox, not flutter map XD
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
+
   @override
   State createState() => _MapPageState();
 }
 
-class _MapPageState extends State<MapPage> {
+class PointData {
+  PointAnnotation? annotation;
+  Point startPoint;
+  Point endPoint;
+  Uint8List imageData;
+  Child child; // Add reference to child data
+
+  PointData({
+    this.annotation,
+    required this.startPoint,
+    required this.endPoint,
+    required this.imageData,
+    required this.child,
+  });
+}
+
+class _MapPageState extends State<MapPage> with SingleTickerProviderStateMixin {
   late CameraOptions _cameraOptions;
   MapboxMap? mapboxMap;
-  late String styleJson;
-  PointAnnotationManager? _pointAnnotationManager;
-  CircleAnnotationManager? _circleAnnotationManager;
+  late PointAnnotationManager pointAnnotationManager;
   late final ChildrenService _childrenService;
   List<Child> children = [];
-  Timer? _timer;
-  void _displayRippleEffect(double lat, double lng) {
-    mapboxMap?.annotations.createCircleAnnotationManager().then((manager) async {
-      _circleAnnotationManager = manager;
+  List<PointData> points = [];
 
-      Timer.periodic(const Duration(milliseconds: 100), (timer) async {
-        for (var child in children) {
-          final circleOptions = CircleAnnotationOptions(
-            geometry: Point(coordinates: Position(lng, lat)),
-            circleRadius: timer.tick % 20 + 5,
-            circleStrokeColor: Colors.red.value,
-            circleStrokeWidth: 2.0,
-            circleColor: Colors.transparent.value, // Để rỗng bên trong
-          );
-
-          await manager.create(circleOptions);
-
-        }
-      });
-    });
-  }
-  //onMapCreated
-  void _onMapCreated(MapboxMap mapboxMap) {
-    // mapboxMap.clearData();
-
-    this.mapboxMap = mapboxMap;
-    // mapboxMap.loadStyleURI("mapbox://styles/giangguot3/cm291zk5y00e101pi9rhj34ly");
-    // mapboxMap.loadStyleURI("mapbox://styles/giangguot3/cm2hjmf0s000o01qr9evb4i63");
-    // await mapboxMap.loadStyleURI('mapbox://styles/mapbox/light-v10');
-    // mapboxMap.loadStyleURI(MapboxStyles.LIGHT);
-    //api call
-    // _fetchAndDisplayChildren();
-    // initMarker();
-    //
-    mapboxMap.loadStyleURI("mapbox://styles/giangguot3/cm2hjmf0s000o01qr9evb4i63").then((_) {
-      _fetchAndDisplayChildren();
-    }).catchError((e) {
-      print('Error loading style: $e');
-    });
-  }
-  void _displayChildrenOnMap(List<Child> children) {
-    mapboxMap?.annotations.createPointAnnotationManager().then((value) async {
-      _pointAnnotationManager = value;
-      for (var child in children) {
-        final lng = child.longitude;
-        final lat = child.latitude;
-        final ByteData bytes = await rootBundle.load('assets/img/child1.png');
-        final Uint8List imageData = bytes.buffer.asUint8List();
-        final options = PointAnnotationOptions(
-          geometry: Point(coordinates: Position(lng, lat)),
-          image: imageData,
-          iconSize: 1,
-        );
-
-        await value.create(options);
-        _displayRippleEffect(lat, lng);
-      }
-    });
-  }
+  final double initialLongitude = 105.800886;
+  final double initialLatitude = 21.048031;
+  late AnimationController _animationController;
 
   @override
   void initState() {
     super.initState();
-    //old access token
-    // String accessToken = "sk.eyJ1IjoiZ2lhbmdndW90MyIsImEiOiJjbTIyc3RuY2gwYmEyMnRwZ2l0bzR2NDN5In0.xEmo_nTtWds2CM1zfp0hUw";
-    //new access token with all permissions applied
-    String accessToken =
-        'sk.eyJ1IjoiZ2lhbmdndW90MyIsImEiOiJjbTJoajk4ZGkwOXZ4MmxzZGs1ZTRscGptIn0.fTc_YMFgc3OmZA0rP7RIBg';
-    MapboxOptions.setAccessToken(accessToken);
+    _loadImageData();
     _childrenService = ChildrenService(context);
-    //camera option
+    String accessToken =
+        "sk.eyJ1IjoiZ2lhbmdndW90MyIsImEiOiJjbTJoajk4ZGkwOXZ4MmxzZGs1ZTRscGptIn0.fTc_YMFgc3OmZA0rP7RIBg";
+    MapboxOptions.setAccessToken(accessToken);
     _cameraOptions = CameraOptions(
-      //long-lat not lat-long
-      //location of Hà Nội
-      center: Point(coordinates: Position(105.800886, 21.048031)),
+      center: Point(coordinates: Position(initialLongitude, initialLatitude)),
       zoom: 12.0,
     );
-    // _fetchAndDisplayChildren();
-    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
-      _fetchAndDisplayChildren();
-    });
+    _animationController = AnimationController(
+      duration: const Duration(seconds: 2),
+      vsync: this,
+    );
   }
+
   @override
   void dispose() {
-    _timer?.cancel();
+    _animationController.dispose();
     super.dispose();
   }
-  void _fetchAndDisplayChildren() async {
-    try {
-      SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-      String parentId = sharedPreferences.getString('token') ?? '';
-      // children = await _childrenService.fetchChildren('yuHoQl6tnnXQgLTJ6yK2C6ut1iY2');
-      children = await _childrenService.fetchChildren(parentId);
-      print(children);
 
-      _displayChildrenOnMap(children);
+  Future<void> _loadImageData() async {
+    final ByteData defaultData = await rootBundle.load('assets/img/child1.png');
+    setState(() {
+      points = [];
+    });
+  }
+
+  Future<void> _fetchAndDisplayChildren() async {
+    try {
+      SharedPreferences sharedPreferences =
+          await SharedPreferences.getInstance();
+      String parentId = sharedPreferences.getString('token') ?? '';
+      print(parentId);
+
+      children = await _childrenService.fetchChildren(parentId);
+      points.clear();
+
+      for (var child in children) {
+        final ByteData imageData =
+            await rootBundle.load('assets/img/child1.png');
+
+        final Point childPoint =
+            Point(coordinates: Position(child.longitude, child.latitude));
+
+        points.add(PointData(
+          startPoint: childPoint,
+          endPoint: childPoint,
+          imageData: imageData.buffer.asUint8List(),
+          child: child,
+        ));
+      }
+      if (pointAnnotationManager != null) {
+        for (var point in points) {
+          PointAnnotationOptions pointAnnotationOptions =
+              PointAnnotationOptions(
+            geometry: point.startPoint,
+            image: point.imageData,
+            iconSize: 1.25,
+          );
+
+          point.annotation =
+              await pointAnnotationManager.create(pointAnnotationOptions);
+        }
+
+        if (children.isNotEmpty) {
+          _startChildrenUpdates();
+        }
+      }
     } catch (e) {
       print('Error fetching children: $e');
     }
   }
+
+  void _startChildrenUpdates() async {
+    Timer.periodic(const Duration(seconds: 2), (timer) async {
+      try {
+        SharedPreferences sharedPreferences =
+            await SharedPreferences.getInstance();
+        String parentId = sharedPreferences.getString('token') ?? '';
+
+        List<Child> updatedChildren =
+            await _childrenService.fetchChildren(parentId);
+
+        // Update positions for existing points
+        for (var point in points) {
+          // Find corresponding updated child
+          var updatedChild = updatedChildren.firstWhere(
+            (child) => child.childId == point.child.childId,
+            orElse: () => point.child,
+          );
+
+          // Update start and end points
+          point.startPoint = point.annotation!.geometry;
+          point.endPoint = Point(
+              coordinates:
+                  Position(updatedChild.longitude, updatedChild.latitude));
+
+          // Update child data
+          point.child = updatedChild;
+        }
+
+        // Animate all points to their new positions
+        await Future.wait(
+          points.map((point) => animatePointAnnotation(point)),
+        );
+      } catch (e) {
+        print('Error updating children positions: $e');
+      }
+    });
+  }
+
+  Future<void> animatePointAnnotation(PointData point) async {
+    if (point.startPoint.coordinates.lat == point.endPoint.coordinates.lat &&
+        point.startPoint.coordinates.lng == point.endPoint.coordinates.lng) {
+      return; // Skip animation if position hasn't changed
+    }
+
+    _animationController.stop();
+    _animationController.reset();
+    final animation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    );
+
+    final completer = Completer<void>();
+
+    void animationListener() {
+      final newLat = point.startPoint.coordinates.lat +
+          (point.endPoint.coordinates.lat - point.startPoint.coordinates.lat) *
+              animation.value;
+      final newLon = point.startPoint.coordinates.lng +
+          (point.endPoint.coordinates.lng - point.startPoint.coordinates.lng) *
+              animation.value;
+
+      setState(() {
+        point.annotation!.geometry =
+            Point(coordinates: Position(newLon, newLat));
+        pointAnnotationManager.update(point.annotation!);
+      });
+
+      if (animation.isCompleted && !completer.isCompleted) {
+        completer.complete();
+        animation.removeListener(animationListener);
+      }
+    }
+
+    animation.addListener(animationListener);
+
+    _animationController.forward(from: 0.0).whenComplete(() {
+      if (!completer.isCompleted) {
+        completer.complete();
+        animation.removeListener(animationListener);
+      }
+    });
+
+    await completer.future;
+  }
+
+  void _onMapCreated(MapboxMap mapboxMap) {
+    this.mapboxMap = mapboxMap;
+    mapboxMap.annotations.createPointAnnotationManager().then((value) async {
+      pointAnnotationManager = value;
+      _fetchAndDisplayChildren(); // Fetch and display children once map is ready
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -138,4 +225,3 @@ class _MapPageState extends State<MapPage> {
     );
   }
 }
-

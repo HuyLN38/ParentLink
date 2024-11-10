@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:developer';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:parent_link/helper/uuid.dart' as globals;
 import '../helper/avatar_manager.dart';
 import 'dart:io';
@@ -26,10 +25,6 @@ class Apis {
     await messaging.requestPermission();
     SharedPreferences prefs = await SharedPreferences.getInstance();
     globals.token = prefs.getString('token');
-    if (token == null) {
-      log('No user token found in SharedPreferences.');
-      return; // or handle the case where no user is logged in
-    }
 
     await messaging.getToken().then((t) {
       if (t != null) {
@@ -112,15 +107,17 @@ class Apis {
   }
 
   static Future<ChatUser?> getSelfInfo() async {
-    log("Token: $token");
-
-    final userDoc = await firestore.collection('users').doc(token).get();
-    if (userDoc.exists) {
-      me = ChatUser.fromJson(userDoc.data()!);
-      AvatarPath = me.image!;
-      return me;
-    }
-    return null;
+    await firestore.collection('users').doc(token).get().then(
+      (user) {
+        if (user.exists) {
+          me = ChatUser.fromJson(user.data()!);
+          AvatarPath = me.image!;
+          getFirebaseMessagingToken();
+          return me;
+        }
+        return null;
+      },
+    );
   }
 
   static Stream<QuerySnapshot<Map<String, dynamic>>> getUserInfo(
@@ -195,7 +192,6 @@ class Apis {
 
   static Future<void> sendMessage(ChatUser chatUser, String msg, Type type,
       String userImage, String userName) async {
-    print(FirebaseAuth.instance.currentUser ?? "no thing user");
     //message sending time (also used as id)
     final time = Timestamp.now().microsecondsSinceEpoch.toString();
 

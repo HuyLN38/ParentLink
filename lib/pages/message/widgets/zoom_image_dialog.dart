@@ -10,11 +10,11 @@ class ImageDialog extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.transparent,
       child: InteractiveViewer(
-        boundaryMargin: const EdgeInsets.all(20),
+        boundaryMargin: const EdgeInsets.all(20.0),
         minScale: 0.5,
         maxScale: 3,
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(15),
+          borderRadius: BorderRadius.circular(25),
           child: Image.network(
             messageImage,
             fit: BoxFit.contain,

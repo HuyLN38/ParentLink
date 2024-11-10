@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:parent_link/api/apis.dart';
 import 'package:parent_link/components/bottom_bar.dart';
 import 'package:parent_link/pages/home/home_page.dart';
-import 'package:parent_link/pages/message/message_page.dart';
 import 'package:parent_link/pages/message/screens/home.dart';
 import 'package:parent_link/pages/profile/profile_page.dart';
 import 'package:parent_link/pages/map_page.dart';
@@ -32,7 +31,7 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     _pagesFuture = loadPages();
-    _startBackgroundServiceIfNeeded();// Start the background service if needed
+    _startBackgroundServiceIfNeeded(); // Start the background service if needed
     Apis.getFirebaseMessagingToken(); // get token for message
   }
 
