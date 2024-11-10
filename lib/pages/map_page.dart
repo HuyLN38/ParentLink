@@ -29,17 +29,19 @@ class PointData {
   });
 }
 
-class _MapPageState extends State<MapPage> with SingleTickerProviderStateMixin {
+class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
   late CameraOptions _cameraOptions;
   MapboxMap? mapboxMap;
   late PointAnnotationManager pointAnnotationManager;
   late final ChildrenService _childrenService;
   List<Child> children = [];
   List<PointData> points = [];
+  bool _isBarVisible = false;
 
   final double initialLongitude = 105.800886;
   final double initialLatitude = 21.048031;
   late AnimationController _animationController;
+  late AnimationController _slideController;
 
   @override
   void initState() {
@@ -57,12 +59,147 @@ class _MapPageState extends State<MapPage> with SingleTickerProviderStateMixin {
       duration: const Duration(seconds: 2),
       vsync: this,
     );
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
   }
 
   @override
   void dispose() {
     _animationController.dispose();
+    _slideController.dispose();
     super.dispose();
+  }
+
+  void _toggleBar() {
+    setState(() {
+      _isBarVisible = !_isBarVisible;
+    });
+  }
+
+  Widget _buildSwipeDetector({required Widget child}) {
+    return GestureDetector(
+      onHorizontalDragEnd: (details) {
+        if (details.primaryVelocity != null) {
+          // Swipe left (hide)
+          if (details.primaryVelocity! < -300 && _isBarVisible) {
+            _toggleBar();
+          }
+          // Swipe right (show)
+          else if (details.primaryVelocity! > 300 && !_isBarVisible) {
+            _toggleBar();
+          }
+        }
+      },
+      child: child,
+    );
+  }
+
+  void _flyToChild(Child child) {
+    mapboxMap?.flyTo(
+      CameraOptions(
+        center: Point(coordinates: Position(child.longitude, child.latitude)),
+        zoom: 17,
+        bearing: 180,
+        pitch: 30,
+      ),
+      MapAnimationOptions(duration: 2000, startDelay: 0),
+    );
+  }
+
+  Widget _buildChildAvatar(Child child) {
+    return GestureDetector(
+      onTap: () => _flyToChild(child),
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        width: 50,
+        height: 50,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: Colors.white,
+            width: 2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: ClipOval(
+          child: Image.asset(
+            'assets/img/child1.png',
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVerticalBar() {
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      left: _isBarVisible ? 16 : -80, // Hide off screen when not visible
+      top: 50,
+      child: _buildSwipeDetector(
+        child: Container(
+          width: 70,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(35),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children:
+                children.map((child) => _buildChildAvatar(child)).toList(),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSwipeIndicator() {
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeInOut,
+      left: _isBarVisible ? -30 : 0,
+      top: 50,
+      child: GestureDetector(
+        onTap: _toggleBar,
+        child: Container(
+          width: 30,
+          height: 60,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius:
+                const BorderRadius.horizontal(right: Radius.circular(15)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Icon(
+            _isBarVisible ? Icons.chevron_left : Icons.chevron_right,
+            color: Colors.grey,
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _loadImageData() async {
@@ -215,11 +352,17 @@ class _MapPageState extends State<MapPage> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: MapWidget(
-          key: const ValueKey("mapWidget"),
-          textureView: true,
-          onMapCreated: _onMapCreated,
-          cameraOptions: _cameraOptions,
+        child: Stack(
+          children: [
+            MapWidget(
+              key: const ValueKey("mapWidget"),
+              textureView: true,
+              onMapCreated: _onMapCreated,
+              cameraOptions: _cameraOptions,
+            ),
+            _buildVerticalBar(),
+            _buildSwipeIndicator(),
+          ],
         ),
       ),
     );
