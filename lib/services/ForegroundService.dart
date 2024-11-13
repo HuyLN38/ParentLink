@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:battery_plus/battery_plus.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:location/location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -65,7 +67,7 @@ class ForegroundService {
       final timestampMillis = data["timestampMillis"];
       if (timestampMillis != null) {
         final timestamp =
-        DateTime.fromMillisecondsSinceEpoch(timestampMillis, isUtc: true);
+            DateTime.fromMillisecondsSinceEpoch(timestampMillis, isUtc: true);
         print('Timestamp: $timestamp');
       }
     }
@@ -92,6 +94,26 @@ class FirstTaskHandler extends TaskHandler {
     print('FirstTaskHandler started');
   }
 
+  Future<bool> _requestPermissions() async {
+    try {
+      final locationPermission = await _location.requestPermission();
+
+      // Also enable location services if they're disabled
+      if (!await _location.serviceEnabled()) {
+        final serviceEnabled = await _location.requestService();
+        if (!serviceEnabled) {
+          return false;
+        }
+      }
+
+      return locationPermission == PermissionStatus.granted;
+    } catch (e) {
+      print('Error requesting permissions: $e');
+      return false;
+    }
+  }
+
+
   Future<void> _sendData() async {
     final prefs = await SharedPreferences.getInstance();
     String? parentId = prefs.getString('parentId');
@@ -101,7 +123,8 @@ class FirstTaskHandler extends TaskHandler {
     final batteryLevel = await _battery.batteryLevel;
 
     final response = await http.put(
-      Uri.parse('https://huyln.info/parentlink/users/$parentId/children/$token'),
+      Uri.parse(
+          'https://huyln.info/parentlink/users/$parentId/children/$token'),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -122,6 +145,11 @@ class FirstTaskHandler extends TaskHandler {
 
   @override
   void onRepeatEvent(DateTime timestamp) async {
+    try {
+      final hasPermissions = await _requestPermissions();
+      if (!hasPermissions) {
+        throw Exception('Required permissions not granted');
+      }
       await _sendData(); // Call _sendData periodically
       FlutterForegroundTask.updateService(
         notificationTitle: 'Sending Data',
@@ -131,11 +159,15 @@ class FirstTaskHandler extends TaskHandler {
         "timestampMillis": timestamp.millisecondsSinceEpoch,
       });
     }
+    catch (e) {
+      print('Failed to start service: $e');
+      rethrow;
+    }
+
+  }
+
   @override
   Future<void> onDestroy(DateTime timestamp) async {
     print('FirstTaskHandler destroyed');
   }
-  }
-
-
-
+}
