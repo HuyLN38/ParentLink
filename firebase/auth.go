@@ -160,6 +160,8 @@ func LoginHandler(c *gin.Context) {
 		user := map[string]interface{}{
 			"localId": localID,
 			"email":   req.Email,
+			"name":    "Parent Account",
+			"image ":  "assets/img/avatar_mom.png",
 		}
 		_, err := docRef.Set(c.Request.Context(), user)
 		if err != nil {
