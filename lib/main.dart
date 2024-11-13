@@ -16,6 +16,7 @@ import 'model/control/control_child_location.dart';
 import 'model/control/control_child_state.dart';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       FlutterLocalNotificationsPlugin();
 

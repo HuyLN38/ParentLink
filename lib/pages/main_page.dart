@@ -36,21 +36,9 @@ class _MainPageState extends State<MainPage> {
   void initState() {
     super.initState();
     _pagesFuture = loadPages();
-    _startForegroundServiceIfNeeded(); // Start the background service if needed
     Apis.getFirebaseMessagingToken(); // get token for message
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? role = prefs.getString('role');
-      if (role == 'children') {
-        // Add the callback to receive task data from the foreground service
-        FlutterForegroundTask.addTaskDataCallback(_foregroundService.onReceiveTaskData);
-
-        // Request permissions and initialize the foreground service
-        await _foregroundService.requestPermissions();
-        _foregroundService.initService();
-      }
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) async { await _initializeApp(); });
   }
 
   Future<List<Widget>> loadPages() async {
@@ -71,7 +59,9 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
-  void _startForegroundServiceIfNeeded() async {
+  Future<void> _initializeApp() async { _pagesFuture = loadPages(); await _startForegroundServiceIfNeeded(); Apis.getFirebaseMessagingToken(); }
+
+  Future<void> _startForegroundServiceIfNeeded() async {
     FlutterForegroundTask.initCommunicationPort();
     WidgetsFlutterBinding.ensureInitialized();
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -80,12 +70,8 @@ class _MainPageState extends State<MainPage> {
       print("Role is children. Attempting to start foreground service.");
       await _foregroundService.requestPermissions();
       _foregroundService.initService();
-      var result = await FlutterForegroundTask.startService(
-        notificationTitle: 'Parent Link',
-        notificationText: 'Location is being shared',
-        callback: startCallback,
-      );
-      print("Foreground service start result: $result");
+      await _foregroundService.startService();
+      // print("Foreground service start result: $result");
     } else {
       print("Role is not children; service not started.");
     }
@@ -129,12 +115,6 @@ class _MainPageState extends State<MainPage> {
         }
       },
     );
-  }
-
-  @override
-  void dispose() {
-    _foregroundService.stopService();  // Stop the background service when the widget is disposed
-    super.dispose();
   }
 
 }
