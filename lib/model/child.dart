@@ -1,4 +1,3 @@
-
 class Child {
   final String childId;
   final String name;

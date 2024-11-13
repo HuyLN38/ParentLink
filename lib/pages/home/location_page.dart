@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:parent_link/builder/child_location_tile.dart';
-import 'package:parent_link/model/child_state.dart';
+import 'package:parent_link/model/child/child_state.dart';
 import 'package:parent_link/model/control/control_child_location.dart';
 import 'package:parent_link/theme/app.theme.dart';
 import 'package:provider/provider.dart';

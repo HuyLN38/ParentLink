@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'dart:convert';
 
-import '../model/Child.dart';
+import '../model/child.dart';
 import 'ChildrenProvider.dart';
 
 class ChildrenService {

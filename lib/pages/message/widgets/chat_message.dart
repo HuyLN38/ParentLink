@@ -1,6 +1,6 @@
 import 'package:parent_link/api/apis.dart';
-import 'package:parent_link/model/chat_user.dart';
-import 'package:parent_link/model/message.dart';
+import 'package:parent_link/model/chat/chat_user.dart';
+import 'package:parent_link/model/chat/message.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';

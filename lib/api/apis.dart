@@ -5,8 +5,8 @@ import '../helper/avatar_manager.dart';
 import 'dart:io';
 
 import 'package:parent_link/api/notification_access_token.dart';
-import 'package:parent_link/model/chat_user.dart';
-import 'package:parent_link/model/message.dart';
+import 'package:parent_link/model/chat/chat_user.dart';
+import 'package:parent_link/model/chat/message.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -103,11 +103,12 @@ class Apis {
   static late String AvatarPath;
 
   static Future<bool> userExists() async {
-    return (await firestore.collection('users').doc(token).get()).exists;
+    return (await firestore.collection('users').doc(globals.token).get())
+        .exists;
   }
 
   static Future<ChatUser?> getSelfInfo() async {
-    await firestore.collection('users').doc(token).get().then(
+    await firestore.collection('users').doc(globals.token).get().then(
       (user) {
         if (user.exists) {
           me = ChatUser.fromJson(user.data()!);
@@ -115,9 +116,9 @@ class Apis {
           getFirebaseMessagingToken();
           return me;
         }
-        return null;
       },
     );
+    return null;
   }
 
   static Stream<QuerySnapshot<Map<String, dynamic>>> getUserInfo(

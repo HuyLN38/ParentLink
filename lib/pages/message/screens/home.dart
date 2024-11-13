@@ -1,13 +1,13 @@
 import 'dart:io';
 
-import 'package:parent_link/api/apis.dart';
-import 'package:parent_link/helper/uuid.dart' as globals;
-import 'package:parent_link/model/chat_user.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
+import 'package:parent_link/api/apis.dart';
+import 'package:parent_link/helper/uuid.dart' as globals;
 import 'package:parent_link/pages/message/widgets/chat_user_card.dart';
 import 'package:parent_link/theme/app.theme.dart';
+
+import '../../../model/chat/chat_user.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -69,7 +69,7 @@ class _HomeScreenState extends State<HomeScreen> {
             elevation: 1,
             leadingWidth: !isSearching ? 200 : null,
             leading: !isSearching
-                ? FutureBuilder<ChatUser?>(
+                ? FutureBuilder(
                     future: Apis.getSelfInfo(),
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
@@ -77,12 +77,12 @@ class _HomeScreenState extends State<HomeScreen> {
                           padding: EdgeInsets.all(8.0),
                           child: Center(child: CircularProgressIndicator()),
                         );
+                      } else if (snapshot.connectionState ==
+                          ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
                       } else if (snapshot.hasError) {
                         return const Text('Error loading profile');
-                      } else if (!snapshot.hasData || snapshot.data == null) {
-                        return const Text('User not found');
                       } else {
-                        final user = snapshot.data!;
                         return Padding(
                           padding: const EdgeInsets.only(left: 20),
                           child: Row(
@@ -90,18 +90,19 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               CircleAvatar(
                                 radius: 25,
-                                backgroundImage: (user.image != null &&
-                                        user.image!.isNotEmpty &&
-                                        user.image !=
+                                backgroundImage: (Apis.me.image != null &&
+                                        Apis.me.image!.isNotEmpty &&
+                                        Apis.me.image !=
                                             'assets/img/avatar_mom.png')
                                     ? FileImage(File(Apis.AvatarPath))
+                                        as ImageProvider
                                     : const AssetImage(
                                             'assets/img/avatar_mom.png')
                                         as ImageProvider,
                               ),
                               const SizedBox(width: 12),
                               Text(
-                                user.name ?? "Fail to display",
+                                Apis.me.name ?? "Fail to display",
                                 style: TextStyle(
                                   color: Apptheme.colors.white,
                                   fontWeight: FontWeight.bold,

@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:parent_link/api/apis.dart';
 import 'package:parent_link/helper/my_date_util.dart';
-import 'package:parent_link/model/chat_user.dart';
+import 'package:parent_link/model/chat/chat_user.dart';
 import 'package:flutter/material.dart';
 import 'package:parent_link/pages/message/widgets/chat_message.dart';
 import 'package:parent_link/pages/message/widgets/new_message.dart';

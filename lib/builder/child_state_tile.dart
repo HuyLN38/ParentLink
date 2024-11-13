@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:parent_link/model/child_state.dart';
+import 'package:parent_link/model/child/child_state.dart';
 import 'package:parent_link/pages/home/location_page.dart';
 import 'package:parent_link/theme/app.theme.dart';
 

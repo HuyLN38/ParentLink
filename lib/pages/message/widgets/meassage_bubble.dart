@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:parent_link/api/apis.dart';
 import 'package:parent_link/helper/my_date_util.dart';
-import 'package:parent_link/model/message.dart';
+import 'package:parent_link/model/chat/message.dart';
 import 'package:flutter/material.dart';
 import 'package:parent_link/pages/message/widgets/zoom_image_dialog.dart';
 

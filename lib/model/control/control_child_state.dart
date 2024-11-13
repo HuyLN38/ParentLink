@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'package:parent_link/model/child_state.dart';
+import 'package:parent_link/model/child/child_state.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ControlChildState extends ChangeNotifier {

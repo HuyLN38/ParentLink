@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart';
-import 'package:parent_link/model/Child.dart';
+import 'package:parent_link/model/child.dart';
 
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
