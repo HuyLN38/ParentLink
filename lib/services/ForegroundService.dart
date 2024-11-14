@@ -12,17 +12,40 @@ import 'package:http/http.dart' as http;
 
 class ForegroundService {
   Timer? _timer;
+  final Location _location = Location();
+  final Battery _battery = Battery();
 
   Future<void> requestPermissions() async {
     if (Platform.isAndroid) {
+      // Request location permissions
+      final locationPermission = await _location.requestPermission();
+      if (locationPermission != PermissionStatus.granted) {
+        print('Location permission not granted');
+        return;
+      }
+
+      // Ensure location services are enabled
+      final serviceEnabled = await _location.serviceEnabled();
+      if (!serviceEnabled) {
+        final serviceRequested = await _location.requestService();
+        if (!serviceRequested) {
+          print('Location service not enabled');
+          return;
+        }
+      }
+
+      // Check for battery optimizations
       if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
         await FlutterForegroundTask.requestIgnoreBatteryOptimization();
       }
+
+      // Check for exact alarms permissions
       if (!await FlutterForegroundTask.canScheduleExactAlarms) {
         await FlutterForegroundTask.openAlarmsAndRemindersSettings();
       }
     }
   }
+
 
   void initService() {
     FlutterForegroundTask.init(
@@ -47,6 +70,7 @@ class ForegroundService {
   }
 
   Future<ServiceRequestResult> startService() async {
+    await requestPermissions();
     if (await FlutterForegroundTask.isRunningService) {
       return FlutterForegroundTask.restartService();
     } else {
@@ -92,6 +116,11 @@ class FirstTaskHandler extends TaskHandler {
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
     print('FirstTaskHandler started');
+    FlutterForegroundTask.updateService(
+      notificationTitle: 'Foreground Task Started',
+      notificationText:
+          'FirstTask has started successfully at: ${timestamp.toString()}',
+    );
   }
 
   Future<bool> _requestPermissions() async {
@@ -108,13 +137,17 @@ class FirstTaskHandler extends TaskHandler {
 
       return locationPermission == PermissionStatus.granted;
     } catch (e) {
-      print('Error requesting permissions: $e');
+      print('Error requesting Location permissions: $e');
       return false;
     }
   }
 
-
   Future<void> _sendData() async {
+    FlutterForegroundTask.updateService(
+      notificationTitle: 'Foreground Task Started',
+      notificationText:
+      'Send data ...',
+    );
     final prefs = await SharedPreferences.getInstance();
     String? parentId = prefs.getString('parentId');
     String? token = prefs.getString('token');
@@ -148,7 +181,7 @@ class FirstTaskHandler extends TaskHandler {
     try {
       final hasPermissions = await _requestPermissions();
       if (!hasPermissions) {
-        throw Exception('Required permissions not granted');
+        throw Exception('Required Location permissions not granted');
       }
       await _sendData(); // Call _sendData periodically
       FlutterForegroundTask.updateService(
@@ -158,12 +191,10 @@ class FirstTaskHandler extends TaskHandler {
       FlutterForegroundTask.sendDataToMain({
         "timestampMillis": timestamp.millisecondsSinceEpoch,
       });
-    }
-    catch (e) {
+    } catch (e) {
       print('Failed to start service: $e');
       rethrow;
     }
-
   }
 
   @override
