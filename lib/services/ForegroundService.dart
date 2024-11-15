@@ -46,7 +46,6 @@ class ForegroundService {
     }
   }
 
-
   void initService() {
     FlutterForegroundTask.init(
       androidNotificationOptions: AndroidNotificationOptions(
@@ -123,78 +122,113 @@ class FirstTaskHandler extends TaskHandler {
     );
   }
 
-  Future<bool> _requestPermissions() async {
+  Future<void> _sendData() async {
     try {
-      final locationPermission = await _location.requestPermission();
+      // Update notification to show sending status
+      await FlutterForegroundTask.updateService(
+        notificationTitle: 'Updating Location',
+        notificationText: 'Sending data...',
+      );
 
-      // Also enable location services if they're disabled
-      if (!await _location.serviceEnabled()) {
-        final serviceEnabled = await _location.requestService();
-        if (!serviceEnabled) {
-          return false;
-        }
+      // Get stored credentials
+      final prefs = await SharedPreferences.getInstance();
+      final parentId = prefs.getString('parentId');
+      final token = prefs.getString('token');
+
+      // Validate credentials
+      if (parentId == null || token == null) {
+        throw Exception('Missing authentication data: parentId or token not found');
       }
 
-      return locationPermission == PermissionStatus.granted;
+      // Get location data with timeout
+      final locationData = await _location.getLocation().timeout(
+        const Duration(seconds: 10),
+        onTimeout: () => throw TimeoutException('Location request timed out'),
+      );
+
+      // Validate location data
+      if (locationData.latitude == null || locationData.longitude == null) {
+        throw Exception('Invalid location data received');
+      }
+
+      // Get battery level
+      final batteryLevel = await _battery.batteryLevel;
+
+      // Prepare API call
+      final url = Uri.parse('https://huyln.info/parentlink/users/$parentId/children/$token');
+      final payload = jsonEncode({
+        'longitude': locationData.longitude,
+        'latitude': locationData.latitude,
+        'speed': locationData.speed ?? 0,  // Use 0 as default if speed is null
+        'battery': batteryLevel,
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+
+      // Send data with timeout
+      final response = await http.put(
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: payload,
+      ).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () => throw TimeoutException('API request timed out'),
+      );
+
+      // Handle response
+      if (response.statusCode == 200) {
+        print('Data sent successfully!');
+        print('Location: ${locationData.latitude}, ${locationData.longitude}');
+        print('Battery: $batteryLevel%');
+
+        await FlutterForegroundTask.updateService(
+          notificationTitle: 'Location Updated',
+          notificationText: 'Last update: ${DateTime.now().toString().substring(11, 16)}',
+        );
+      } else {
+        throw Exception('Server error: ${response.statusCode}\nBody: ${response.body}');
+      }
     } catch (e) {
-      print('Error requesting Location permissions: $e');
-      return false;
+      print('Error sending data: $e');
+
+      // Update notification to show error
+      await FlutterForegroundTask.updateService(
+        notificationTitle: 'Update Failed',
+        notificationText: 'Will retry in next interval',
+      );
+
+      // Optional: Store failed update for retry
+      await _storeFailedUpdate();
     }
   }
 
-  Future<void> _sendData() async {
-    FlutterForegroundTask.updateService(
-      notificationTitle: 'Foreground Task Started',
-      notificationText:
-      'Send data ...',
-    );
-    final prefs = await SharedPreferences.getInstance();
-    String? parentId = prefs.getString('parentId');
-    String? token = prefs.getString('token');
+  Future<void> _storeFailedUpdate() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final failedUpdates = prefs.getStringList('failedUpdates') ?? [];
 
-    final locationData = await _location.getLocation();
-    final batteryLevel = await _battery.batteryLevel;
+      if (failedUpdates.length >= 50) {  // Limit stored failed updates
+        failedUpdates.removeAt(0);  // Remove oldest
+      }
 
-    final response = await http.put(
-      Uri.parse(
-          'https://huyln.info/parentlink/users/$parentId/children/$token'),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'longitude': locationData.longitude,
-        'latitude': locationData.latitude,
-        'speed': 1,
-        'battery': batteryLevel,
-      }),
-    );
-
-    if (response.statusCode != 200) {
-      print("Failed to send data: ${response.body}");
-    } else {
-      print("Data sent successfully!");
+      failedUpdates.add(DateTime.now().toIso8601String());
+      await prefs.setStringList('failedUpdates', failedUpdates);
+    } catch (e) {
+      print('Error storing failed update: $e');
     }
   }
 
   @override
   void onRepeatEvent(DateTime timestamp) async {
-    try {
-      final hasPermissions = await _requestPermissions();
-      if (!hasPermissions) {
-        throw Exception('Required Location permissions not granted');
-      }
-      await _sendData(); // Call _sendData periodically
-      FlutterForegroundTask.updateService(
-        notificationTitle: 'Sending Data',
-        notificationText: 'Data sent at: ${timestamp.toString()}',
-      );
-      FlutterForegroundTask.sendDataToMain({
-        "timestampMillis": timestamp.millisecondsSinceEpoch,
-      });
-    } catch (e) {
-      print('Failed to start service: $e');
-      rethrow;
-    }
+    await _sendData(); // Call _sendData periodically
+    FlutterForegroundTask.updateService(
+      notificationTitle: 'Sending Data',
+      notificationText: 'Data sent at: ${timestamp.toString()}',
+    );
+    FlutterForegroundTask.sendDataToMain({
+      "timestampMillis": timestamp.millisecondsSinceEpoch,
+    });
   }
 
   @override
