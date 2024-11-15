@@ -10,6 +10,8 @@ import 'package:location/location.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:geolocator/geolocator.dart' as geo;
+
 class ForegroundService {
   Timer? _timer;
   final Location _location = Location();
@@ -18,19 +20,25 @@ class ForegroundService {
   Future<void> requestPermissions() async {
     if (Platform.isAndroid) {
       // Request location permissions
-      final locationPermission = await _location.requestPermission();
-      if (locationPermission != PermissionStatus.granted) {
-        print('Location permission not granted');
-        return;
+      bool serviceEnabled = await geo.Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        // Location services are not enabled don't continue
+        // accessing the position and request users of the
+        // App to enable the location services.
+        return Future.error('Location services are disabled.');
       }
 
-      // Ensure location services are enabled
-      final serviceEnabled = await _location.serviceEnabled();
-      if (!serviceEnabled) {
-        final serviceRequested = await _location.requestService();
-        if (!serviceRequested) {
-          print('Location service not enabled');
-          return;
+      geo.LocationPermission permission =
+          await geo.Geolocator.checkPermission();
+      if (permission == geo.LocationPermission.denied) {
+        permission = await geo.Geolocator.requestPermission();
+        if (permission == geo.LocationPermission.denied) {
+          // Permissions are denied, next time you could try
+          // requesting permissions again (this is also where
+          // Android's shouldShowRequestPermissionRationale
+          // returned true. According to Android guidelines
+          // your App should show an explanatory UI now.
+          return Future.error('Location permissions are denied');
         }
       }
 
@@ -109,7 +117,27 @@ void startCallback() {
 }
 
 class FirstTaskHandler extends TaskHandler {
-  final Location _location = Location();
+  final geo.LocationSettings locationSettings = geo.LocationSettings(
+    accuracy: geo.LocationAccuracy.high,
+    distanceFilter: 100,
+  );
+
+  StreamSubscription<geo.Position>? positionStream;
+
+  FirstTaskHandler() {
+    initPositionStream();
+  }
+
+  void initPositionStream() {
+    positionStream =
+        geo.Geolocator.getPositionStream(locationSettings: locationSettings)
+            .listen((geo.Position? position) {
+      print(position == null
+          ? 'Unknown'
+          : '${position.latitude.toString()}, ${position.longitude.toString()}');
+    });
+  }
+
   final Battery _battery = Battery();
 
   @override
@@ -137,15 +165,12 @@ class FirstTaskHandler extends TaskHandler {
 
       // Validate credentials
       if (parentId == null || token == null) {
-        throw Exception('Missing authentication data: parentId or token not found');
+        throw Exception(
+            'Missing authentication data: parentId or token not found');
       }
 
       // Get location data with timeout
-      final locationData = await _location.getLocation().timeout(
-        const Duration(seconds: 10),
-        onTimeout: () => throw TimeoutException('Location request timed out'),
-      );
-
+      final locationData = await geo.Geolocator.getCurrentPosition(locationSettings: locationSettings);
       // Validate location data
       if (locationData.latitude == null || locationData.longitude == null) {
         throw Exception('Invalid location data received');
@@ -155,26 +180,29 @@ class FirstTaskHandler extends TaskHandler {
       final batteryLevel = await _battery.batteryLevel;
 
       // Prepare API call
-      final url = Uri.parse('https://huyln.info/parentlink/users/$parentId/children/$token');
+      final url = Uri.parse(
+          'https://huyln.info/parentlink/users/$parentId/children/$token');
       final payload = jsonEncode({
         'longitude': locationData.longitude,
         'latitude': locationData.latitude,
-        'speed': locationData.speed ?? 0,  // Use 0 as default if speed is null
+        'speed': locationData.speed ?? 0, // Use 0 as default if speed is null
         'battery': batteryLevel,
         'timestamp': DateTime.now().toIso8601String(),
       });
 
       // Send data with timeout
-      final response = await http.put(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: payload,
-      ).timeout(
-        const Duration(seconds: 30),
-        onTimeout: () => throw TimeoutException('API request timed out'),
-      );
+      final response = await http
+          .put(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: payload,
+          )
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () => throw TimeoutException('API request timed out'),
+          );
 
       // Handle response
       if (response.statusCode == 200) {
@@ -184,10 +212,12 @@ class FirstTaskHandler extends TaskHandler {
 
         await FlutterForegroundTask.updateService(
           notificationTitle: 'Location Updated',
-          notificationText: 'Last update: ${DateTime.now().toString().substring(11, 16)}',
+          notificationText:
+              'Last update: ${DateTime.now().toString().substring(11, 16)}',
         );
       } else {
-        throw Exception('Server error: ${response.statusCode}\nBody: ${response.body}');
+        throw Exception(
+            'Server error: ${response.statusCode}\nBody: ${response.body}');
       }
     } catch (e) {
       print('Error sending data: $e');
@@ -208,8 +238,9 @@ class FirstTaskHandler extends TaskHandler {
       final prefs = await SharedPreferences.getInstance();
       final failedUpdates = prefs.getStringList('failedUpdates') ?? [];
 
-      if (failedUpdates.length >= 50) {  // Limit stored failed updates
-        failedUpdates.removeAt(0);  // Remove oldest
+      if (failedUpdates.length >= 50) {
+        // Limit stored failed updates
+        failedUpdates.removeAt(0); // Remove oldest
       }
 
       failedUpdates.add(DateTime.now().toIso8601String());
