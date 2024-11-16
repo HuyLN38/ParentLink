@@ -29,7 +29,7 @@ class ForegroundService {
       }
 
       geo.LocationPermission permission =
-          await geo.Geolocator.checkPermission();
+      await geo.Geolocator.checkPermission();
       if (permission == geo.LocationPermission.denied) {
         permission = await geo.Geolocator.requestPermission();
         if (permission == geo.LocationPermission.denied) {
@@ -98,7 +98,7 @@ class ForegroundService {
       final timestampMillis = data["timestampMillis"];
       if (timestampMillis != null) {
         final timestamp =
-            DateTime.fromMillisecondsSinceEpoch(timestampMillis, isUtc: true);
+        DateTime.fromMillisecondsSinceEpoch(timestampMillis, isUtc: true);
         print('Timestamp: $timestamp');
       }
     }
@@ -117,6 +117,8 @@ void startCallback() {
 }
 
 class FirstTaskHandler extends TaskHandler {
+  geo.Position? currentPosition;
+  geo.Position? lastPosition;
   final geo.LocationSettings locationSettings = geo.LocationSettings(
     accuracy: geo.LocationAccuracy.high,
     distanceFilter: 100,
@@ -132,13 +134,14 @@ class FirstTaskHandler extends TaskHandler {
     positionStream =
         geo.Geolocator.getPositionStream(locationSettings: locationSettings)
             .listen((geo.Position? position) {
-      print(position == null
-          ? 'Unknown'
-          : '${position.latitude.toString()}, ${position.longitude.toString()}');
-    });
+          print(position == null
+              ? 'Unknown'
+              : '${position.latitude.toString()}, ${position.longitude.toString()}');
+        });
   }
 
   final Battery _battery = Battery();
+
 
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
@@ -146,8 +149,28 @@ class FirstTaskHandler extends TaskHandler {
     FlutterForegroundTask.updateService(
       notificationTitle: 'Foreground Task Started',
       notificationText:
-          'FirstTask has started successfully at: ${timestamp.toString()}',
+      'FirstTask has started successfully at: ${timestamp.toString()}',
     );
+  }
+
+  Future<void> _sendDataIfNeed() async {
+    currentPosition = await geo.Geolocator.getCurrentPosition(locationSettings: locationSettings);
+    if (lastPosition == null) {
+      lastPosition = currentPosition;
+      _sendData();
+      return;
+    }
+    else if(calDistance(lastPosition, currentPosition) < 15){
+      return;
+    }
+    else {
+      lastPosition = currentPosition;
+      _sendData();}
+  }
+
+  double calDistance(geo.Position? p1, geo.Position? p2){
+    double d = geo.Geolocator.distanceBetween(p1!.latitude, p1!.longitude, p2!.latitude, p2!.longitude);
+    return d;
   }
 
   Future<void> _sendData() async {
@@ -193,16 +216,16 @@ class FirstTaskHandler extends TaskHandler {
       // Send data with timeout
       final response = await http
           .put(
-            url,
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: payload,
-          )
+        url,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: payload,
+      )
           .timeout(
-            const Duration(seconds: 30),
-            onTimeout: () => throw TimeoutException('API request timed out'),
-          );
+        const Duration(seconds: 30),
+        onTimeout: () => throw TimeoutException('API request timed out'),
+      );
 
       // Handle response
       if (response.statusCode == 200) {
@@ -213,7 +236,7 @@ class FirstTaskHandler extends TaskHandler {
         await FlutterForegroundTask.updateService(
           notificationTitle: 'Location Updated',
           notificationText:
-              'Last update: ${DateTime.now().toString().substring(11, 16)}',
+          'Last update: ${DateTime.now().toString().substring(11, 16)}',
         );
       } else {
         throw Exception(
@@ -252,7 +275,7 @@ class FirstTaskHandler extends TaskHandler {
 
   @override
   void onRepeatEvent(DateTime timestamp) async {
-    await _sendData(); // Call _sendData periodically
+    await _sendDataIfNeed(); // Call _sendData periodically
     FlutterForegroundTask.updateService(
       notificationTitle: 'Sending Data',
       notificationText: 'Data sent at: ${timestamp.toString()}',
