@@ -87,27 +87,44 @@ func ValidateOTP(c *gin.Context) {
 	docRef := firestoreClient.Collection("Registration").Doc(OTP)
 	doc, err := docRef.Get(context.Background())
 	if err != nil {
+		log.Printf("Failed to get document: %v", err)
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid OTP"})
 		return
 	}
 
 	data := doc.Data()
-	email := data["email"].(string)
-	password := data["password"].(string)
+	email, emailOk := data["email"].(string)
+	password, passwordOk := data["password"].(string)
+	if !emailOk || !passwordOk {
+		log.Printf("Invalid document data: %v", data)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid document data"})
+		return
+	}
 
 	params := (&auth.UserToCreate{}).
 		Email(email).
 		Password(password)
 
-	u, err := authClient.CreateUser(context.Background(), params)
+	var u *auth.UserRecord
+	const maxRetries = 3
+	for i := 0; i < maxRetries; i++ {
+		u, err = authClient.CreateUser(context.Background(), params)
+		if err == nil {
+			break
+		}
+		log.Printf("Attempt %d: Failed to create user: %v", i+1, err)
+		time.Sleep(2 * time.Second)
+	}
+
 	if err != nil {
+		log.Printf("Failed to create user after multiple attempts: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
 	}
 
 	_, err = docRef.Delete(context.Background())
 	if err != nil {
-		return
+		log.Printf("Failed to delete document: %v", err)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"uid": u.UID})
