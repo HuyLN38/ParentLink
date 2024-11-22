@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:parent_link/api/apis.dart';
 import 'package:parent_link/components/bottom_bar.dart';
 import 'package:parent_link/pages/home/home_page.dart';
@@ -14,7 +15,7 @@ import '../services/BackgroundService.dart'; // Import the
 import 'package:parent_link/helper/uuid.dart' as globals;
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
-import '../services/ForegroundService.dart';// background service
+import '../services/ForegroundService.dart'; // background service
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -26,6 +27,7 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   //this selected index is to control the bottom nav bar
   int _selectedIndex = 0;
+  bool _isForegroundServiceRunning = false;
 
   late Future<List<Widget>> _pagesFuture;
   String? _role;
@@ -38,7 +40,10 @@ class _MainPageState extends State<MainPage> {
     _pagesFuture = loadPages();
     Apis.getFirebaseMessagingToken(); // get token for message
 
-    WidgetsBinding.instance.addPostFrameCallback((_) async { await _initializeApp(); });
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _initializeApp();
+      await _checkForegroundServiceStatus();
+    });
   }
 
   Future<List<Widget>> loadPages() async {
@@ -59,24 +64,27 @@ class _MainPageState extends State<MainPage> {
     }
   }
 
-  Future<void> _initializeApp() async { _pagesFuture = loadPages(); await _startForegroundServiceIfNeeded(); Apis.getFirebaseMessagingToken(); }
+  Future<void> _initializeApp() async {
+    _pagesFuture = loadPages();
+    Apis.getFirebaseMessagingToken();
+    await _requestLocationPermission();
+    await _startForegroundServiceIfNeeded();
+  }
 
   Future<void> _startForegroundServiceIfNeeded() async {
-    FlutterForegroundTask.initCommunicationPort();
-    WidgetsFlutterBinding.ensureInitialized();
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? role = prefs.getString('role');
     if (role == 'children') {
-      print("Role is children. Attempting to start foreground service.");
       await _foregroundService.requestPermissions();
+      FlutterForegroundTask.initCommunicationPort();
+      WidgetsFlutterBinding.ensureInitialized();
+      print("Role is children. Attempting to start foreground service.");
       _foregroundService.initService();
-      await _foregroundService.startService();
       // print("Foreground service start result: $result");
     } else {
       print("Role is not children; service not started.");
     }
   }
-
 
   // this method will update our selected index
   // when the user tags on the bottom bar
@@ -111,10 +119,95 @@ class _MainPageState extends State<MainPage> {
               role: _role,
             ),
             body: pages[_selectedIndex],
+            floatingActionButton: FloatingActionButton(
+              backgroundColor: _isForegroundServiceRunning ? Colors.red : Colors.blue,
+              onPressed: () async {
+                bool locationServiceEnabled = await _checkLocationEnable();
+                if (!locationServiceEnabled) return;
+                setState(() {
+                  if (_isForegroundServiceRunning) {
+                    _foregroundService.stopService();
+                    print('Foreground Service Stopped');
+                  } else {
+                    _foregroundService.startService();
+                    print('Foreground Service Started');
+                  }
+                  _isForegroundServiceRunning = !_isForegroundServiceRunning;
+                });
+              },
+              child: Icon(
+                _isForegroundServiceRunning ? Icons.stop : Icons.play_arrow,
+                color: Colors.white,
+              ),
+            ),
           );
         }
       },
     );
+  }
+
+  Future<bool> _checkLocationEnable() async {
+    bool serviceEnabled;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Location Services Disabled'),
+            content: Text(
+                'Location services are disabled. Please enable them in your device settings.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+      // Location services are not enabled don't continue
+      // accessing the position and request users of the
+      // App to enable the location services.
+      return false;
+    }else {
+      return true;
+    }
+  }
+
+
+  Future<void> _requestLocationPermission() async {
+    LocationPermission permission;
+
+    // Test if location services are enabled.
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        // Permissions are denied, next time you could try
+        // requesting permissions again (this is also where
+        // Android's shouldShowRequestPermissionRationale
+        // returned true. According to Android guidelines
+        // your App should show an explanatory UI now.
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      // Permissions are denied forever, handle appropriately.
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+  }
+
+  Future<void> _checkForegroundServiceStatus() async {
+    bool isRunning = await _foregroundService.isRunning();
+    setState(() {
+      _isForegroundServiceRunning = isRunning;
+    });
   }
 
 }
