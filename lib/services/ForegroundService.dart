@@ -206,7 +206,7 @@ class FirstTaskHandler extends TaskHandler {
       final payload = jsonEncode({
         'longitude': locationData.longitude,
         'latitude': locationData.latitude,
-        'speed': locationData.speed ?? 0, // Use 0 as default if speed is null
+        'speed': speedConvertToKm(locationData.speed) ?? 0, // Use 0 as default if speed is null
         'battery': batteryLevel,
         'timestamp': DateTime.now().toIso8601String(),
       });
@@ -228,7 +228,7 @@ class FirstTaskHandler extends TaskHandler {
       // Handle response
       if (response.statusCode == 200) {
         print('Data sent successfully!');
-        print('Location: ${locationData.latitude}, ${locationData.longitude}');
+        print('Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}');
         print('Battery: $batteryLevel%');
 
         await FlutterForegroundTask.updateService(
@@ -253,6 +253,12 @@ class FirstTaskHandler extends TaskHandler {
       await _storeFailedUpdate();
     }
   }
+
+  double speedConvertToKm(double? speed) {
+    if (speed == null) return 0.0;
+    return speed * 3.6; // Convert m/s to km/h
+  }
+
 
   Future<void> _storeFailedUpdate() async {
     try {
