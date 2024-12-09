@@ -130,7 +130,7 @@ class Apis {
   }
 
   static Future<void> updateActiveStatus(bool isOnline) async {
-    firestore.collection('users').doc(token).update({
+    await firestore.collection('users').doc(token).update({
       'is_online': isOnline,
       'last_active': DateTime.now().microsecondsSinceEpoch.toString(),
       'push_token': me.pushToken,
@@ -159,15 +159,15 @@ class Apis {
 
   static Stream<QuerySnapshot<Map<String, dynamic>>> getAllUser(
       List<String> userIds) {
-    Stream<QuerySnapshot<Map<String, dynamic>>> ids = firestore
-        .collection('users')
-        .where('localId', whereIn: userIds)
-        .snapshots();
+    final ids = firestore
+      .collection('users')
+      .where('localId', whereIn: userIds)
+      .snapshots();
 
-    SharedPreferences.getInstance().then((prefs) {
+    SharedPreferences.getInstance().then((prefs) async {
       for (var id in userIds) {
         try {
-          AvatarManager.getOrUpdateAvatar(
+          await AvatarManager.getOrUpdateAvatar(
               id,
               'https://huyln.info/parentlink/users/${me.id}/children-avatar/$id',
               (prefs.getString('avatar_last_modified_$id') ?? '0'));

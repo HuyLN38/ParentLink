@@ -67,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
             backgroundColor: Apptheme.colors.blue,
             centerTitle: true,
             elevation: 1,
-            leadingWidth: !isSearching ? 200 : null,
+            leadingWidth: !isSearching ? 215 : null,
             leading: !isSearching
                 ? FutureBuilder(
                     future: Apis.getSelfInfo(),
