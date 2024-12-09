@@ -39,7 +39,7 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
   late AnimationController _animationController;
   late AnimationController _slideController;
   CircleAnnotation? _previewGeofence;
-
+  PointAnnotation? pointAnnotation;
   @override
   void initState() {
     super.initState();
@@ -147,7 +147,7 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
   }
 
   Future<void> _saveGeofence() async {
-    if (_selectedLocation == null || _geofenceNameController.text.isEmpty) {
+    if (_selectedLocation == null || _geofenceNameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Please select a location and enter a name')),
@@ -196,9 +196,13 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
       circleAnnotationManager.delete(_previewGeofence!);
       _previewGeofence = null;
     }
-    _selectedLocation = Point(coordinates: Position(0, 0));
+    // _selectedLocation = Point(coordinates: Position(0, 0));
+    _selectedLocation = null;
     _geofenceRadius = 100.0;
     _geofenceNameController.clear();
+    setState(() {
+      _isCreatingGeofence = false;
+    });
   }
 
   Widget _buildGeofenceControls() {
@@ -416,6 +420,7 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
       print(parentId);
 
       children = (await _childrenService.fetchChildren(parentId));
+      print('Number of children: ${children.length}');
       final directory = await getApplicationDocumentsDirectory();
       points.clear();
 
