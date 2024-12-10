@@ -51,10 +51,11 @@ class _ChatUserCardState extends State<ChatUserCard> {
 
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundImage:
-                      widget.user.image != 'assets/img/avatar_mom.png'
-                          ? FileImage(File(widget.user.image!))
-                          : const AssetImage('assets/img/avatar_mom.png'),
+                  backgroundImage: (widget.user.image != null &&
+                          widget.user.image!.isNotEmpty &&
+                          File(widget.user.image!).existsSync())
+                      ? FileImage(File(widget.user.image!))
+                      : const AssetImage('assets/img/avatar_mom.png'),
                   child: widget.user.image != null
                       ? null
                       : const Icon(Icons.person_3_sharp),
