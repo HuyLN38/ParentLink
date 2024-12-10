@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:iconly/iconly.dart';
+import 'package:google_nav_bar/google_nav_bar.dart';
 import 'package:parent_link/theme/app.theme.dart';
 
 class BottomBar extends StatelessWidget {
@@ -8,58 +8,55 @@ class BottomBar extends StatelessWidget {
   final String? role;
 
   const BottomBar({
-    Key? key,
+    super.key,
     required this.currentIndex,
     required this.onTap,
     this.role,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    return BottomNavigationBar(
-      type: BottomNavigationBarType.fixed,
-      currentIndex: currentIndex,
-      onTap: onTap,
-      backgroundColor: Colors.white,
-      selectedItemColor: Apptheme.colors.blue,
-      unselectedItemColor: Colors.grey,
-      showSelectedLabels: false,
-      showUnselectedLabels: false,
-      items: role == 'parent'
-          ? const [
-              BottomNavigationBarItem(
-                icon: Icon(IconlyLight.home),
-                activeIcon: Icon(IconlyBold.home),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(IconlyLight.location),
-                activeIcon: Icon(IconlyBold.location),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(IconlyLight.message),
-                activeIcon: Icon(IconlyBold.message),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(IconlyLight.profile),
-                activeIcon: Icon(IconlyBold.profile),
-                label: '',
-              ),
-            ]
-          : const [
-              BottomNavigationBarItem(
-                icon: Icon(IconlyLight.message),
-                activeIcon: Icon(IconlyBold.message),
-                label: '',
-              ),
-              BottomNavigationBarItem(
-                icon: Icon(IconlyLight.profile),
-                activeIcon: Icon(IconlyBold.profile),
-                label: '',
-              ),
-            ],
+    return Container(
+        padding: const EdgeInsets.all(16),
+        color: Colors.white, 
+        child: GNav(
+          gap: 8,
+          activeColor: Apptheme.colors.blue, 
+          color: Colors.grey, 
+          tabBackgroundColor: Colors.blue.withOpacity(0.1), 
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          onTabChange: onTap, 
+          selectedIndex: currentIndex,
+          tabs: role == 'parent'
+              ? [
+                  const GButton(
+                    icon: Icons.home,
+                    text: 'Home',
+                  ),
+                  const GButton(
+                    icon: Icons.map,
+                    text: 'Map',
+                  ),
+                  const GButton(
+                    icon: Icons.message,
+                    text: 'Message',
+                  ),
+                  const GButton(
+                    icon: Icons.person,
+                    text: 'Profile',
+                  ),
+                ]
+              : [
+                  const GButton(
+                    icon: Icons.message,
+                    text: 'Message',
+                  ),
+                  const GButton(
+                    icon: Icons.person,
+                    text: 'Profile',
+                  ),
+                ],
+        ),
     );
   }
 }
