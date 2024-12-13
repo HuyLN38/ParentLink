@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'package:provider/provider.dart';
 
 import 'package:flutter/material.dart';
 import 'package:parent_link/model/child/child_state.dart';
+import 'package:parent_link/model/control/control_child_state.dart';
 import 'package:parent_link/pages/home/location_page.dart';
 import 'package:parent_link/theme/app.theme.dart';
 
@@ -29,106 +31,147 @@ class ChildStateTile extends StatelessWidget {
     Color background = backgroundColor[index % backgroundColor.length];
 
     return Positioned(
-      top: (150 * index).toDouble(),
-      left: 0,
-      right: 0,
-      child: GestureDetector(
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => LocationPage(childState: childState!),
-          ),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              stops: [0.0, 0.7],
-              colors: [background.withOpacity(1), background.withOpacity(0.5)],
-            ),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: Apptheme.colors.white,
-              width: 1,
+        top: (150 * index).toDouble(),
+        left: 0,
+        right: 0,
+        child: GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LocationPage(childState: childState!),
             ),
           ),
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(left: 20.0, top: 30, bottom: 50),
-                child: Row(
-                  children: [
-                    // Avatar with circular border
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Apptheme.colors.white,
-                          width: 2,
-                        ),
-                        shape: BoxShape.circle,
-                      ),
-                      child: CircleAvatar(
-                        radius: 35,
-                        backgroundImage: childState!.avatarPath != null
-                            ? FileImage(File(childState!.avatarPath!))
-                            : const AssetImage(ChildState.defaultImage)
-                                as ImageProvider,
-                      ),
-                    ),
-                    const SizedBox(width: 35), // Use SizedBox for spacing
-
-                    // Child's info
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          childState!.name,
-                          style: const TextStyle(fontSize: 20),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          childState!.activity,
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        const SizedBox(height: 10),
-
-                        // Status indicators
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            _buildStatusContainer(
-                              icon: Icons.turn_right,
-                              text: "${childState!.distance}m",
-                            ),
-                            const SizedBox(width: 8),
-                            _buildStatusContainer(
-                              icon: _getBatteryIcon(childState!.battery),
-                              text: "${childState!.battery}%",
-                            ),
-                            const SizedBox(width: 8),
-                            _buildStatusContainer(
-                              text: childState!.state,
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: [0.0, 0.7],
+                colors: [
+                  background.withOpacity(1),
+                  background.withOpacity(0.5)
+                ],
               ),
-              Align(
-                alignment: Alignment.topRight,
-                child: IconButton(
-                  icon: const Icon(Icons.more_horiz),
-                  onPressed: () {},
-                ),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: Apptheme.colors.white,
+                width: 1,
               ),
-            ],
+            ),
+            child: Stack(
+              children: [
+                Padding(
+                  padding:
+                      const EdgeInsets.only(left: 20.0, top: 30, bottom: 50),
+                  child: Row(
+                    children: [
+                      // Avatar with circular border
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Apptheme.colors.white,
+                            width: 2,
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        child: CircleAvatar(
+                          radius: 35,
+                          backgroundImage: childState!.avatarPath != null
+                              ? FileImage(File(childState!.avatarPath!))
+                              : const AssetImage(ChildState.defaultImage)
+                                  as ImageProvider,
+                        ),
+                      ),
+                      const SizedBox(width: 35), // Use SizedBox for spacing
+
+                      // Child's info
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            childState!.name,
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            childState!.activity,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 10),
+
+                          // Status indicators
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              _buildStatusContainer(
+                                icon: Icons.turn_right,
+                                text: "${childState!.distance}m",
+                              ),
+                              const SizedBox(width: 8),
+                              _buildStatusContainer(
+                                icon: _getBatteryIcon(childState!.battery),
+                                text: "${childState!.battery}%",
+                              ),
+                              const SizedBox(width: 8),
+                              _buildStatusContainer(
+                                text: childState!.state,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.topRight,
+                  child: PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_horiz),
+                    onSelected: (String value) async {
+                      if (value == 'delete') {
+                        try {
+                          // Call deleteChild and pass the childId
+                          await context
+                              .read<ControlChildState>()
+                              .deleteChild(childState!.childId!);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Child deleted successfully')),
+                          );
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text('Failed to delete child: $e')),
+                          );
+                          print(e);
+                        }
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('You selected: $value')),
+                        );
+                      }
+                    },
+                    itemBuilder: (BuildContext context) =>
+                        <PopupMenuEntry<String>>[
+                      const PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Text('delete'),
+                      ),
+                      // const PopupMenuItem<String>(
+                      //   value: 'Help',
+                      //   child: Text('Help'),
+                      // ),
+                      // const PopupMenuItem<String>(
+                      //   value: 'Logout',
+                      //   child: Text('Logout'),
+                      // ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 
   // Helper method to build status container
