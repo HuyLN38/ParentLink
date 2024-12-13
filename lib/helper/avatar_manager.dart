@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -47,8 +48,22 @@ class AvatarManager {
 
   // Compare timestamps to check if update is needed
   static bool _needsUpdate(String storedTimestamp, String newTimestamp) {
-    final stored = DateTime.parse(storedTimestamp);
-    final new_ = DateTime.parse(newTimestamp);
+    DateTime? parseSafe(String timestamp) {
+      try {
+        return DateTime.parse(timestamp);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    final stored = parseSafe(storedTimestamp);
+    final new_ = parseSafe(newTimestamp);
+
+    // If either timestamp is invalid, assume an update is needed
+    if (stored == null || new_ == null) {
+      return true;
+    }
+
     return new_.isAfter(stored);
   }
 
