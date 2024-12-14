@@ -238,11 +238,28 @@ func DeleteChild(c *gin.Context) {
 	staticID := c.Param("staticID")
 	childID := c.Param("childID")
 
+	docRef := firestoreClient.Collection("users").Doc(childID)
+	_, err := docRef.Delete(context.Background())
+	if err != nil {
+		log.Printf("Failed to delete document: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete document"})
+		return
+	}
+
+	//// Delete all child documents associated with the user
+	//childrenCollection := docRef.Collection("children")
+	//_, err = childrenCollection.Documents(c.Request.Context()).GetAll()
+	//if err != nil {
+	//	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch children"})
+	//	fmt.Println("Failed to fetch children:", err)
+	//	return
+	//}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	query := `DELETE FROM children WHERE static_id=$1 AND child_id=$2`
-	_, err := pool.Exec(ctx, query, staticID, childID)
+	_, err = pool.Exec(ctx, query, staticID, childID)
 	if err != nil {
 		log.Printf("Error deleting child: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete child"})
