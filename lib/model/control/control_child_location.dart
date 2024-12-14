@@ -15,4 +15,11 @@ class ControlChildLocation extends ChangeNotifier {
     ChildLocation('Home', '0:00', ' 7:30', 'null'),
   ];
   List<ChildLocation> get getChildLocationList => childLocationList;
+
+  //   void updateLocation(int index, ChildLocation newLocation) {
+  //   if (index >= 0 && index < childLocationList.length) {
+  //     childLocationList[index] = newLocation; 
+  //     notifyListeners(); 
+  //   }
+  // }
 }
