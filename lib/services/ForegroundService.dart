@@ -7,6 +7,7 @@ import 'package:battery_plus/battery_plus.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:location/location.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
@@ -14,14 +15,12 @@ import 'package:geolocator/geolocator.dart' as geo;
 
 class ForegroundService {
   Timer? _timer;
-  final Location _location = Location();
-  final Battery _battery = Battery();
 
   Future<void> requestPermissions() async {
     if (Platform.isAndroid) {
       // Check for battery optimizations
       final NotificationPermission notificationPermission =
-      await FlutterForegroundTask.checkNotificationPermission();
+          await FlutterForegroundTask.checkNotificationPermission();
       if (notificationPermission != NotificationPermission.granted) {
         await FlutterForegroundTask.requestNotificationPermission();
       }
@@ -92,7 +91,7 @@ class ForegroundService {
       final timestampMillis = data["timestampMillis"];
       if (timestampMillis != null) {
         final timestamp =
-        DateTime.fromMillisecondsSinceEpoch(timestampMillis, isUtc: true);
+            DateTime.fromMillisecondsSinceEpoch(timestampMillis, isUtc: true);
         print('Timestamp: $timestamp');
       }
     }
@@ -117,6 +116,12 @@ void startCallback() {
 class FirstTaskHandler extends TaskHandler {
   geo.Position? currentPosition;
   geo.Position? lastPosition;
+  geo.Position? stopPossition;
+  bool isMoving = true;
+  bool isInGeoFen = true;
+  double stopSpeed = 2;
+  double geoFenRadius = 50;
+
   final geo.LocationSettings locationSettings = geo.LocationSettings(
     accuracy: geo.LocationAccuracy.high,
     distanceFilter: 100,
@@ -132,14 +137,13 @@ class FirstTaskHandler extends TaskHandler {
     positionStream =
         geo.Geolocator.getPositionStream(locationSettings: locationSettings)
             .listen((geo.Position? position) {
-          print(position == null
-              ? 'Unknown'
-              : '${position.latitude.toString()}, ${position.longitude.toString()}');
-        });
+      print(position == null
+          ? 'Unknown'
+          : '${position.latitude.toString()}, ${position.longitude.toString()}');
+    });
   }
 
   final Battery _battery = Battery();
-
 
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
@@ -147,28 +151,140 @@ class FirstTaskHandler extends TaskHandler {
     FlutterForegroundTask.updateService(
       notificationTitle: 'Foreground Task Started',
       notificationText:
-      'FirstTask has started successfully at: ${timestamp.toString()}',
+          'FirstTask has started successfully at: ${timestamp.toString()}',
     );
   }
 
   Future<void> _sendDataIfNeed() async {
-    currentPosition = await geo.Geolocator.getCurrentPosition(locationSettings: locationSettings);
-    if (lastPosition == null) {
+    try {
+      // Fetch the current position
+      currentPosition = await geo.Geolocator.getCurrentPosition(
+        locationSettings: locationSettings,
+      );
+      print('currentPosition: $currentPosition');
+      print('lastPosition: $lastPosition');
+      print('stoptPosition: $stopPossition');
+
+      // Convert speed to km/h
+
+      final double currentSpeed = speedConvertToKm(currentPosition?.speed ?? 0);
+      if (lastPosition == null) {
+        lastPosition = currentPosition;
+        stopPossition = currentPosition;
+        await _sendData();
+        return;
+      }
+
+      // Check and update geo-fence and movement state
+      checkInGeoFen();
+      checkMovingState();
+
+      // Define conditions for stopping or moving
+      if (!isMoving && currentSpeed < stopSpeed) {
+        if (stopPossition == null) {
+          stopPossition =
+              currentPosition; // Assign stop position if not already set
+          print('Stop position recorded: $stopPossition');
+        }
+        return; // No action needed if stationary and below stopSpeed
+      }
+
+      if (!isMoving && currentSpeed > stopSpeed && isInGeoFen) {
+        lastPosition = currentPosition;
+        await _sendData();
+        return;
+      }
+
+      if (isMoving && currentSpeed < stopSpeed && !isInGeoFen) {
+        isMoving = false;
+        stopPossition = currentPosition;
+        // TODO: Add function to send the stop point
+        return;
+      }
+
+      // Calculate distance
+      final double distanceMoved = calDistance(lastPosition, currentPosition);
+
+      if (isMoving && distanceMoved < 15) {
+        await _logSpeedAndUpdateNotification(
+            currentSpeed, 'Location does not change');
+        return;
+      }
+
+      if (!isMoving &&
+          calDistanceWithFilter(lastPosition, currentPosition) < 15) {
+        await _logSpeedAndUpdateNotification(
+            currentSpeed, 'Location does not change');
+        return;
+      }
+
+      // Update last position and send data if movement is detected
       lastPosition = currentPosition;
-      _sendData();
-      return;
+      await _sendData();
+    } catch (e) {
+      print('Error in _sendDataIfNeed: $e');
     }
-    else if(calDistance(lastPosition, currentPosition) < 15){
-      return;
-    }
-    else {
-      lastPosition = currentPosition;
-      _sendData();}
   }
 
-  double calDistance(geo.Position? p1, geo.Position? p2){
-    double d = geo.Geolocator.distanceBetween(p1!.latitude, p1!.longitude, p2!.latitude, p2!.longitude);
+  Future<void> _logSpeedAndUpdateNotification(
+      double speed, String message) async {
+    // await _writeSpeedToFile(speed);
+    await FlutterForegroundTask.updateService(
+      notificationTitle: message,
+      notificationText: '$speed km/h',
+    );
+  }
+
+  double lowPassFilter(double oldValue, double newValue, double alpha) {
+    return oldValue * (1 - alpha) + newValue * alpha;
+  }
+
+  void checkInGeoFen() {
+    if (lastPosition == null) {
+      isInGeoFen = false;
+      return;
+    }
+    if (calDistance(currentPosition, stopPossition) < geoFenRadius) {
+      isInGeoFen = false;
+    } else {
+      isInGeoFen = true;
+    }
+  }
+
+  void checkMovingState() {
+    if (currentPosition == null) {
+      isMoving = true;
+    }
+    if (speedConvertToKm(currentPosition!.speed) < stopSpeed) {
+      isMoving = false;
+    } else {
+      isMoving = true;
+    }
+  }
+
+  double calDistance(geo.Position? p1, geo.Position? p2) {
+    double d = geo.Geolocator.distanceBetween(
+        p1!.latitude, p1!.longitude, p2!.latitude, p2!.longitude);
     return d;
+  }
+
+  double calDistanceWithFilter(geo.Position? p1, geo.Position? p2) {
+    if (p1 == null || p2 == null) {
+      throw ArgumentError("Positions p1 and p2 cannot be null.");
+    }
+
+    // Apply a low-pass filter to latitude and longitude
+    double filteredLatitude = lowPassFilter(p1.latitude, p2.latitude, 0.1);
+    double filteredLongitude = lowPassFilter(p1.longitude, p2.longitude, 0.1);
+
+    // Calculate distance between filtered positions
+    double distance = geo.Geolocator.distanceBetween(
+      filteredLatitude,
+      filteredLongitude,
+      p2.latitude,
+      p2.longitude,
+    );
+    return distance;
   }
 
   Future<void> _sendData() async {
@@ -191,7 +307,8 @@ class FirstTaskHandler extends TaskHandler {
       }
 
       // Get location data with timeout
-      final locationData = await geo.Geolocator.getCurrentPosition(locationSettings: locationSettings);
+      final locationData = await geo.Geolocator.getCurrentPosition(
+          locationSettings: locationSettings);
       // Validate location data
       if (locationData.latitude == null || locationData.longitude == null) {
         throw Exception('Invalid location data received');
@@ -206,7 +323,8 @@ class FirstTaskHandler extends TaskHandler {
       final payload = jsonEncode({
         'longitude': locationData.longitude,
         'latitude': locationData.latitude,
-        'speed': speedConvertToKm(locationData.speed) ?? 0, // Use 0 as default if speed is null
+        'speed': speedConvertToKm(locationData.speed) ??
+            1, // Use 0 as default if speed is null
         'battery': batteryLevel,
         'timestamp': DateTime.now().toIso8601String(),
       });
@@ -214,29 +332,32 @@ class FirstTaskHandler extends TaskHandler {
       // Send data with timeout
       final response = await http
           .put(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: payload,
-      )
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: payload,
+          )
           .timeout(
-        const Duration(seconds: 30),
-        onTimeout: () => throw TimeoutException('API request timed out'),
-      );
+            const Duration(seconds: 30),
+            onTimeout: () => throw TimeoutException('API request timed out'),
+          );
 
       // Handle response
       if (response.statusCode == 200) {
         print('Data sent successfully!');
-        print('Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}');
+        print(
+            'Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}');
         print('Battery: $batteryLevel%');
 
         await FlutterForegroundTask.updateService(
           notificationTitle: 'Location Updated',
           notificationText:
-          'Last update: ${DateTime.now().toString().substring(11, 16)}',
+              'Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}',
         );
       } else {
+        print(
+            'Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}');
         throw Exception(
             'Server error: ${response.statusCode}\nBody: ${response.body}');
       }
@@ -246,7 +367,7 @@ class FirstTaskHandler extends TaskHandler {
       // Update notification to show error
       await FlutterForegroundTask.updateService(
         notificationTitle: 'Update Failed',
-        notificationText: 'Will retry in next interval',
+        notificationText: '$e',
       );
 
       // Optional: Store failed update for retry
@@ -255,10 +376,9 @@ class FirstTaskHandler extends TaskHandler {
   }
 
   double speedConvertToKm(double? speed) {
-    if (speed == null) return 0.0;
+    if (speed == null || speed.isNaN || speed.isInfinite) return 1;
     return speed * 3.6; // Convert m/s to km/h
   }
-
 
   Future<void> _storeFailedUpdate() async {
     try {
@@ -280,13 +400,13 @@ class FirstTaskHandler extends TaskHandler {
   @override
   void onRepeatEvent(DateTime timestamp) async {
     await _sendDataIfNeed(); // Call _sendData periodically
-    FlutterForegroundTask.updateService(
-      notificationTitle: 'Sending Data',
-      notificationText: 'Data sent at: ${timestamp.toString()}',
-    );
-    FlutterForegroundTask.sendDataToMain({
-      "timestampMillis": timestamp.millisecondsSinceEpoch,
-    });
+    // FlutterForegroundTask.updateService(
+    //   notificationTitle: 'Sending Data',
+    //   notificationText: 'Data sent at: ${timestamp.toString()}',
+    // );
+    // FlutterForegroundTask.sendDataToMain({
+    //   "timestampMillis": timestamp.millisecondsSinceEpoch,
+    // });
   }
 
   @override
@@ -294,3 +414,28 @@ class FirstTaskHandler extends TaskHandler {
     print('FirstTaskHandler destroyed');
   }
 }
+
+// Future<void> _writeSpeedToFile(double speed) async {
+//   try {
+//     // Get the application's documents directory
+//     final directory = await getApplicationDocumentsDirectory();
+//     print('File will be saved in: ${directory.path}');
+
+//     final file = File('${directory.path}/speed_data.txt');
+
+//     // If the file doesn't exist, create it
+//     if (!await file.exists()) {
+//       await file.create();
+//     }
+
+//     // Write data to the file
+//     final timestamp = DateTime.now().toIso8601String();
+//     final data = '[$timestamp] Speed: ${speed.toStringAsFixed(2)} km/h\n';
+
+//     // Append to the file
+//     await file.writeAsString(data, mode: FileMode.append);
+//     print('Speed data written to file: $data');
+//   } catch (e) {
+//     print('Error writing to file: $e');
+//   }
+// }
