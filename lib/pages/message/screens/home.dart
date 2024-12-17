@@ -67,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
             backgroundColor: Apptheme.colors.blue,
             centerTitle: true,
             elevation: 1,
-            leadingWidth: !isSearching ? 215 : null,
+            leadingWidth: !isSearching ? 300 : null,
             leading: !isSearching
                 ? FutureBuilder(
                     future: Apis.getSelfInfo(),
@@ -90,10 +90,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             children: [
                               CircleAvatar(
                                 radius: 25,
-                                backgroundImage: (Apis.me.image != null &&
-                                        Apis.me.image!.isNotEmpty &&
-                                        Apis.me.image !=
-                                            'assets/img/avatar_mom.png')
+                                backgroundImage: (Apis.me.image !=
+                                        'assets/img/avatar_mom.png')
                                     ? FileImage(File(Apis.AvatarPath))
                                         as ImageProvider
                                     : const AssetImage(

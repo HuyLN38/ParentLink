@@ -21,7 +21,7 @@ class ForegroundService {
     if (Platform.isAndroid) {
       // Check for battery optimizations
       final NotificationPermission notificationPermission =
-      await FlutterForegroundTask.checkNotificationPermission();
+          await FlutterForegroundTask.checkNotificationPermission();
       if (notificationPermission != NotificationPermission.granted) {
         await FlutterForegroundTask.requestNotificationPermission();
       }
@@ -92,7 +92,7 @@ class ForegroundService {
       final timestampMillis = data["timestampMillis"];
       if (timestampMillis != null) {
         final timestamp =
-        DateTime.fromMillisecondsSinceEpoch(timestampMillis, isUtc: true);
+            DateTime.fromMillisecondsSinceEpoch(timestampMillis, isUtc: true);
         print('Timestamp: $timestamp');
       }
     }
@@ -132,14 +132,13 @@ class FirstTaskHandler extends TaskHandler {
     positionStream =
         geo.Geolocator.getPositionStream(locationSettings: locationSettings)
             .listen((geo.Position? position) {
-          print(position == null
-              ? 'Unknown'
-              : '${position.latitude.toString()}, ${position.longitude.toString()}');
-        });
+      print(position == null
+          ? 'Unknown'
+          : '${position.latitude.toString()}, ${position.longitude.toString()}');
+    });
   }
 
   final Battery _battery = Battery();
-
 
   @override
   Future<void> onStart(DateTime timestamp, TaskStarter starter) async {
@@ -147,27 +146,28 @@ class FirstTaskHandler extends TaskHandler {
     FlutterForegroundTask.updateService(
       notificationTitle: 'Foreground Task Started',
       notificationText:
-      'FirstTask has started successfully at: ${timestamp.toString()}',
+          'FirstTask has started successfully at: ${timestamp.toString()}',
     );
   }
 
   Future<void> _sendDataIfNeed() async {
-    currentPosition = await geo.Geolocator.getCurrentPosition(locationSettings: locationSettings);
+    currentPosition = await geo.Geolocator.getCurrentPosition(
+        locationSettings: locationSettings);
     if (lastPosition == null) {
       lastPosition = currentPosition;
       _sendData();
       return;
-    }
-    else if(calDistance(lastPosition, currentPosition) < 15){
+    } else if (calDistance(lastPosition, currentPosition) < 15) {
       return;
-    }
-    else {
+    } else {
       lastPosition = currentPosition;
-      _sendData();}
+      _sendData();
+    }
   }
 
-  double calDistance(geo.Position? p1, geo.Position? p2){
-    double d = geo.Geolocator.distanceBetween(p1!.latitude, p1!.longitude, p2!.latitude, p2!.longitude);
+  double calDistance(geo.Position? p1, geo.Position? p2) {
+    double d = geo.Geolocator.distanceBetween(
+        p1!.latitude, p1!.longitude, p2!.latitude, p2!.longitude);
     return d;
   }
 
@@ -191,7 +191,8 @@ class FirstTaskHandler extends TaskHandler {
       }
 
       // Get location data with timeout
-      final locationData = await geo.Geolocator.getCurrentPosition(locationSettings: locationSettings);
+      final locationData = await geo.Geolocator.getCurrentPosition(
+          locationSettings: locationSettings);
       // Validate location data
       if (locationData.latitude == null || locationData.longitude == null) {
         throw Exception('Invalid location data received');
@@ -206,7 +207,8 @@ class FirstTaskHandler extends TaskHandler {
       final payload = jsonEncode({
         'longitude': locationData.longitude,
         'latitude': locationData.latitude,
-        'speed': speedConvertToKm(locationData.speed) ?? 0, // Use 0 as default if speed is null
+        'speed': speedConvertToKm(locationData.speed) ??
+            0, // Use 0 as default if speed is null
         'battery': batteryLevel,
         'timestamp': DateTime.now().toIso8601String(),
       });
@@ -214,27 +216,28 @@ class FirstTaskHandler extends TaskHandler {
       // Send data with timeout
       final response = await http
           .put(
-        url,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: payload,
-      )
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: payload,
+          )
           .timeout(
-        const Duration(seconds: 30),
-        onTimeout: () => throw TimeoutException('API request timed out'),
-      );
+            const Duration(seconds: 30),
+            onTimeout: () => throw TimeoutException('API request timed out'),
+          );
 
       // Handle response
       if (response.statusCode == 200) {
         print('Data sent successfully!');
-        print('Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}');
+        print(
+            'Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}');
         print('Battery: $batteryLevel%');
 
         await FlutterForegroundTask.updateService(
           notificationTitle: 'Location Updated',
           notificationText:
-          'Last update: ${DateTime.now().toString().substring(11, 16)}',
+              'Last update: ${DateTime.now().toString().substring(11, 16)}',
         );
       } else {
         throw Exception(
@@ -258,7 +261,6 @@ class FirstTaskHandler extends TaskHandler {
     if (speed == null) return 0.0;
     return speed * 3.6; // Convert m/s to km/h
   }
-
 
   Future<void> _storeFailedUpdate() async {
     try {
