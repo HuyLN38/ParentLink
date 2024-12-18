@@ -253,37 +253,21 @@ func GetChildrenLocation(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "success", "location": child, "details": result})
-}
-
-func GetChildrenList(c *gin.Context) {
-	staticID := c.Param("staticID")
-	var children []Child
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-
-	query := `SELECT child_id, name, birthday, last_modified, last_seen, phone, battery FROM children WHERE static_id=$1`
-	rows, err := pool.Query(ctx, query, staticID)
-	if err != nil {
-		log.Printf("Error fetching children list: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch children"})
-		return
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var child Child
-		err := rows.Scan(&child.ChildID, &child.Name, &child.Birthday, &child.LastModified, &child.LastSeen, &child.PhoneNumber, &child.Battery)
-		if err != nil {
-			log.Printf("Error scanning child list data: %v", err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read child data"})
-			return
+	// Extract the first result's long name
+	var longName string
+	if results, ok := result["results"].([]interface{}); ok && len(results) > 0 {
+		if firstResult, ok := results[0].(map[string]interface{}); ok {
+			if addressComponents, ok := firstResult["address_components"].([]interface{}); ok && len(addressComponents) > 0 {
+				if firstComponent, ok := addressComponents[0].(map[string]interface{}); ok {
+					if ln, ok := firstComponent["long_name"].(string); ok {
+						longName = ln
+					}
+				}
+			}
 		}
-		children = append(children, child)
 	}
 
-	c.JSON(http.StatusOK, gin.H{"status": "Children fetched successfully", "children": children})
+	c.JSON(http.StatusOK, gin.H{"status": "success", "location": child, "details": longName})
 }
 
 func DeleteChild(c *gin.Context) {
