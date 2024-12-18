@@ -2,9 +2,12 @@ package firebase
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"sync"
@@ -202,6 +205,55 @@ func GetChildAvatar(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"avatar": avatar})
+}
+
+func GetChildrenLocation(c *gin.Context) {
+	staticID := c.Param("staticID")
+	childID := c.Param("childID")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var child Child
+	query := `SELECT longitude, latitude, speed FROM children WHERE static_id=$1 AND child_id=$2`
+	err := pool.QueryRow(ctx, query, staticID, childID).Scan(&child.Longitude, &child.Latitude, &child.Speed)
+	if err != nil {
+		log.Printf("Error fetching location: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch location"})
+		return
+	}
+
+	// Make HTTP GET request to Goong API
+	url := fmt.Sprintf("https://rsapi.goong.io/Geocode?latlng=%f,%f&api_key=ZFNfziyLJjN38E50eRRi4lyVNHdin0nads9UOdT7", child.Latitude, child.Longitude)
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Printf("Failed to make request to Goong API: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch location details"})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Goong API request failed with status: %v", resp.Status)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch location details"})
+		return
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Failed to read Goong API response body: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch location details"})
+		return
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		log.Printf("Failed to parse Goong API response: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch location details"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success", "location": child, "details": result})
 }
 
 func GetChildrenList(c *gin.Context) {
