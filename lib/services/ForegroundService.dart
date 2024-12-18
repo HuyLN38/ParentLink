@@ -177,7 +177,7 @@ class FirstTaskHandler extends TaskHandler {
 
       // Check and update geo-fence and movement state
       checkInGeoFen();
-      checkMovingState();
+      // checkMovingState();
 
       // Define conditions for stopping or moving
       if (!isMoving && currentSpeed < stopSpeed) {
@@ -190,6 +190,7 @@ class FirstTaskHandler extends TaskHandler {
       }
 
       if (!isMoving && currentSpeed > stopSpeed && isInGeoFen) {
+        isMoving = true;
         lastPosition = currentPosition;
         await _sendData();
         return;
@@ -251,16 +252,16 @@ class FirstTaskHandler extends TaskHandler {
     }
   }
 
-  void checkMovingState() {
-    if (currentPosition == null) {
-      isMoving = true;
-    }
-    if (speedConvertToKm(currentPosition!.speed) < stopSpeed) {
-      isMoving = false;
-    } else {
-      isMoving = true;
-    }
-  }
+  // void checkMovingState() {
+  //   if (currentPosition == null) {
+  //     isMoving = true;
+  //   }
+  //   if (speedConvertToKm(currentPosition!.speed) < stopSpeed) {
+  //     isMoving = false;
+  //   } else {
+  //     isMoving = true;
+  //   }
+  // }
 
   double calDistance(geo.Position? p1, geo.Position? p2) {
     double d = geo.Geolocator.distanceBetween(
