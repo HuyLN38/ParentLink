@@ -49,6 +49,8 @@ func main() {
 
 	router.GET("parentlink/users/:staticID/children-avatar/:childID", firebase.GetChildAvatar)
 	router.GET("parentlink/users/:staticID/children-status/:childID", firebase.GetChildrenStatus)
+	router.POST("parentlink/users/children-location/:childID", firebase.UpdateChildrenLog)
+	router.GET("parentlink/users/children-location/:childID", firebase.GetChildrenLog)
 
 	router.GET("parentlink/users/:staticID/children/:childID", firebase.CheckIfChildExists)
 	router.PUT("parentlink/users/:staticID/children/:childID", firebase.UpdateChildLocation)

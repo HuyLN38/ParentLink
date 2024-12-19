@@ -361,3 +361,115 @@ func GetChildrenStatus(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"status": "success", "child": child})
 }
+
+type LocationLog struct {
+	ChildID  string     `json:"childId"`
+	Location string     `json:"location"`
+	Start    time.Time  `json:"start"`
+	End      *time.Time `json:"end"`
+}
+
+// Modify the GetChildrenLog function
+func GetChildrenLog(c *gin.Context) {
+	childID := c.Param("childID")
+	var logs []LocationLog
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	query := `SELECT child_id, location, start, leave FROM location_logs WHERE child_id=$1`
+	rows, err := pool.Query(ctx, query, childID)
+	if err != nil {
+		log.Printf("Error fetching location logs: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch location logs"})
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var logg LocationLog
+		var end *time.Time
+		err := rows.Scan(&logg.ChildID, &logg.Location, &logg.Start, &end)
+		if err != nil {
+			log.Printf("Error scanning location log data: %v", err)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read location log data"})
+			return
+		}
+		logg.End = end
+		logs = append(logs, logg)
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "Location logs fetched successfully", "logs": logs})
+}
+
+func UpdateChildrenLog(c *gin.Context) {
+	childID := c.Param("childID")
+
+	type LocationRequest struct {
+		Longitude float64 `json:"longitude" binding:"required"`
+		Latitude  float64 `json:"latitude"  binding:"required"`
+	}
+
+	var req LocationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// Make HTTP GET request to Goong API
+	url := fmt.Sprintf("https://rsapi.goong.io/Geocode?latlng=%f,%f&api_key=ZFNfziyLJjN38E50eRRi4lyVNHdin0nads9UOdT7", req.Latitude, req.Longitude)
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Printf("Failed to make request to Goong API: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch location details"})
+		return
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("Goong API request failed with status: %v", resp.Status)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch location details"})
+		return
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Printf("Failed to read Goong API response body: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch location details"})
+		return
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		log.Printf("Failed to parse Goong API response: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch location details"})
+		return
+	}
+
+	// Extract the first result's long name
+	var longName string
+	if results, ok := result["results"].([]interface{}); ok && len(results) > 0 {
+		if firstResult, ok := results[0].(map[string]interface{}); ok {
+			if addressComponents, ok := firstResult["address_components"].([]interface{}); ok && len(addressComponents) > 0 {
+				if firstComponent, ok := addressComponents[0].(map[string]interface{}); ok {
+					if ln, ok := firstComponent["long_name"].(string); ok {
+						longName = ln
+					}
+				}
+			}
+		}
+	}
+
+	query := `INSERT INTO location_logs (child_id, location, start) VALUES ($1, $2, NOW())`
+	_, err = pool.Exec(ctx, query, childID, longName)
+	if err != nil {
+		log.Printf("Error inserting location log: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to insert location log"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "Location updated successfully"})
+}
