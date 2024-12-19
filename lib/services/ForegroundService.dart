@@ -324,8 +324,7 @@ class FirstTaskHandler extends TaskHandler {
       final payload = jsonEncode({
         'longitude': locationData.longitude,
         'latitude': locationData.latitude,
-        'speed': speedConvertToKm(locationData.speed) ??
-            1, // Use 0 as default if speed is null
+        'speed': speedConvertToKm(locationData.speed) ??  0, // Use 0 as default if speed is null
         'battery': batteryLevel,
         'timestamp': DateTime.now().toIso8601String(),
       });
@@ -355,6 +354,7 @@ class FirstTaskHandler extends TaskHandler {
           notificationTitle: 'Location Updated',
           notificationText:
               'Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}',
+              'Last update: ${DateTime.now().toString().substring(11, 16)}',
         );
       } else {
         print(
@@ -415,28 +415,3 @@ class FirstTaskHandler extends TaskHandler {
     print('FirstTaskHandler destroyed');
   }
 }
-
-// Future<void> _writeSpeedToFile(double speed) async {
-//   try {
-//     // Get the application's documents directory
-//     final directory = await getApplicationDocumentsDirectory();
-//     print('File will be saved in: ${directory.path}');
-
-//     final file = File('${directory.path}/speed_data.txt');
-
-//     // If the file doesn't exist, create it
-//     if (!await file.exists()) {
-//       await file.create();
-//     }
-
-//     // Write data to the file
-//     final timestamp = DateTime.now().toIso8601String();
-//     final data = '[$timestamp] Speed: ${speed.toStringAsFixed(2)} km/h\n';
-
-//     // Append to the file
-//     await file.writeAsString(data, mode: FileMode.append);
-//     print('Speed data written to file: $data');
-//   } catch (e) {
-//     print('Error writing to file: $e');
-//   }
-// }

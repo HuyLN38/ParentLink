@@ -145,7 +145,6 @@ class Apis {
     final chatUser = ChatUser(
         id: uuid,
         name: username,
-        about: "I'm using Chat Web",
         createdAt: time,
         image: await AvatarManager.getOrUpdateAvatar(
             uuid,
@@ -168,7 +167,8 @@ class Apis {
       final tasks = userIds.map((id) async {
         final avatarUrl =
             'https://huyln.info/parentlink/users/${me.id}/children-avatar/$id';
-        final lastModified = prefs.getString('avatar_last_modified_$id') ?? "1970-01-01T00:00:00Z";
+        final lastModified = prefs.getString('avatar_last_modified_$id') ??
+            "1970-01-01T00:00:00Z";
 
         try {
           await AvatarManager.getOrUpdateAvatar(id, avatarUrl, lastModified);

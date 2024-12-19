@@ -30,7 +30,6 @@ void main() async {
 
   SharedPreferences prefs = await SharedPreferences.getInstance();
   globals.token = prefs.getString('token');
-
   runApp(const MyApp());
 }
 
