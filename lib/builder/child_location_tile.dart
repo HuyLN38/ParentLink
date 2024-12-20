@@ -4,35 +4,42 @@ import 'package:parent_link/theme/app.theme.dart';
 
 class ChildLocationTile extends StatelessWidget {
   final ChildLocation childLocation;
-  const ChildLocationTile({super.key, required this.childLocation});
+  final bool isFirstElement;
+
+  const ChildLocationTile({
+    super.key,
+    required this.childLocation,
+    required this.isFirstElement,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
-      padding: childLocation.active == 'null'
+      padding: isFirstElement
           ? const EdgeInsets.all(12)
           : const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-          border: Border.all(
-            color: childLocation.active != 'null'
-                ? Apptheme.colors.black.withOpacity(0.3)
-                : Colors.transparent,
-            width: 1,
-          ),
-          boxShadow: [
-            if (childLocation.active != 'null')
-              BoxShadow(
-                color: Colors.black.withOpacity(0.24),
-                offset: Offset(0, 3),
-                blurRadius: 8,
-                spreadRadius: 0,
-              ),
-          ],
-          color: childLocation.active == 'null'
-              ? Apptheme.colors.pale_blue.withOpacity(0.3)
-              : Apptheme.colors.white,
-          borderRadius: BorderRadius.circular(20)),
+        border: Border.all(
+          color: isFirstElement
+              ? Apptheme.colors.black.withOpacity(0.3)
+              : Colors.transparent,
+          width: 1,
+        ),
+        boxShadow: [
+          if (isFirstElement)
+            BoxShadow(
+              color: Colors.black.withOpacity(0.24),
+              offset: const Offset(0, 3),
+              blurRadius: 8,
+              spreadRadius: 0,
+            ),
+        ],
+        color: !isFirstElement
+            ? Apptheme.colors.pale_blue.withOpacity(0.3)
+            : Apptheme.colors.white,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -41,12 +48,12 @@ class ChildLocationTile extends StatelessWidget {
               // Icon location
               Container(
                 decoration: BoxDecoration(
-                  color: childLocation.active == 'null'
+                  color: !isFirstElement
                       ? Apptheme.colors.gray_light
                       : Apptheme.colors.white,
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: childLocation.active == 'null'
+                    color: !isFirstElement
                         ? Apptheme.colors.gray_light
                         : Apptheme.colors.orage,
                     width: 1,
@@ -55,7 +62,7 @@ class ChildLocationTile extends StatelessWidget {
                 padding: const EdgeInsets.all(8),
                 child: Icon(
                   Icons.location_on_outlined,
-                  color: childLocation.active == 'null'
+                  color: !isFirstElement
                       ? Apptheme.colors.black
                       : Apptheme.colors.blue,
                 ),
@@ -65,21 +72,27 @@ class ChildLocationTile extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    childLocation.location,
-                    style: TextStyle(
-                      color: childLocation.active == 'null'
-                          ? Apptheme.colors.gray
-                          : Apptheme.colors.black,
-                      fontSize: childLocation.active == 'null' ? 16 : 18,
-                      fontWeight: FontWeight.bold,
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.6,
+                    child: Text(
+                      childLocation.location,
+                      style: TextStyle(
+                        color: !isFirstElement
+                            ? Apptheme.colors.gray
+                            : Apptheme.colors.black,
+                        fontSize: !isFirstElement ? 16 : 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: true,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${childLocation.timeStart} - ${childLocation.active == 'null' ? childLocation.timeEnd : childLocation.active}',
+                    childLocation.time,
                     style: TextStyle(
-                      fontSize: childLocation.active == 'null' ? 16 : 18,
+                      fontSize: !isFirstElement ? 16 : 18,
                       color: Apptheme.colors.gray,
                     ),
                   ),

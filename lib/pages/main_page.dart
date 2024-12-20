@@ -11,7 +11,6 @@ import 'package:parent_link/pages/message/screens/home.dart';
 import 'package:parent_link/pages/profile/profile_page.dart';
 import 'package:parent_link/pages/map_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/BackgroundService.dart'; // Import the
 import 'package:parent_link/helper/uuid.dart' as globals;
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
