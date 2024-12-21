@@ -1,13 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:battery_plus/battery_plus.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-import 'package:location/location.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
@@ -117,8 +113,8 @@ class FirstTaskHandler extends TaskHandler {
   geo.Position? currentPosition;
   geo.Position? lastPosition;
   geo.Position? stopPossition;
-  bool isMoving = true;
-  bool isInGeoFen = true;
+  bool isMoving = false;
+  bool isInGeoFen = false;
   double stopSpeed = 2;
   double geoFenRadius = 50;
 
@@ -196,6 +192,13 @@ class FirstTaskHandler extends TaskHandler {
         return;
       }
 
+      if (!isMoving && currentSpeed > stopSpeed && !isInGeoFen) {
+        isMoving = true;
+        lastPosition = currentPosition;
+        await _sendData(lastPosition);
+        return;
+      }
+
       if (isMoving && currentSpeed < stopSpeed && !isInGeoFen) {
         isMoving = false;
         stopPossition = currentPosition;
@@ -205,8 +208,17 @@ class FirstTaskHandler extends TaskHandler {
         return;
       }
 
-      // Calculate distance
       final double distanceMoved = calDistance(lastPosition, currentPosition);
+
+      if (isMoving &&
+          currentSpeed < stopSpeed &&
+          isInGeoFen &&
+          distanceMoved > 15) {
+        isMoving = false;
+        _sendData(currentPosition);
+        return;
+      }
+      // Calculate distance
 
       if (isMoving && distanceMoved < 15) {
         await _logSpeedAndUpdateNotification(
@@ -317,8 +329,8 @@ class FirstTaskHandler extends TaskHandler {
       final payload = jsonEncode({
         'longitude': locationData!.longitude,
         'latitude': locationData.latitude,
-        'speed': speedConvertToKm(locationData.speed) ??
-            0, // Use 0 as default if speed is null
+        'speed': speedConvertToKm(
+            locationData.speed), // Use 0 as default if speed is null
         'battery': batteryLevel,
         'timestamp': DateTime.now().toIso8601String(),
       });
