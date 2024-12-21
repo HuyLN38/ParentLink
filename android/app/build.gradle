@@ -13,9 +13,10 @@ plugins {
 android {
     namespace = "com.example.parent_link"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion "25.1.8937393"
 
     compileOptions {
+        coreLibraryDesugaringEnabled true
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
@@ -34,15 +35,20 @@ android {
 
         manifestPlaceholders += [
                 background_service_icon: "@mipmap/ic_launcher"]
-    }
+        multiDexEnabled true
 
-    buildTypes {
-        release {
-            signingConfig = signingConfigs.debug
+        dependencies {
+            coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.2.2'
+        }
+
+        buildTypes {
+            release {
+                signingConfig = signingConfigs.debug
+            }
         }
     }
-}
 
-flutter {
-    source = "../.."
+    flutter {
+        source = "../.."
+    }
 }
