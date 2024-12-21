@@ -168,6 +168,7 @@ class _MainPageState extends State<MainPage> {
               TextButton(
                 onPressed: () {
                   Geolocator.openLocationSettings();
+                  Navigator.pop(context);
                 },
                 child: Text('OK'),
               ),

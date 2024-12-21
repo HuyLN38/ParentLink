@@ -57,13 +57,14 @@ class _LocationPageState extends State<LocationPage> {
               )),
 
           //turn back icom
-          Align(
-              alignment: Alignment.topLeft,
+          Positioned(
+              top: 20,
+              left: 0,
               child: Container(
                 margin: EdgeInsets.only(top: 18),
                 child: IconButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/main_page');
+                    Navigator.pop(context);
                   },
                   icon: Icon(Icons.chevron_left),
                   iconSize: 40,
