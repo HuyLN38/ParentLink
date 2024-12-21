@@ -11,7 +11,6 @@ import 'package:parent_link/pages/message/screens/home.dart';
 import 'package:parent_link/pages/profile/profile_page.dart';
 import 'package:parent_link/pages/map_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/BackgroundService.dart'; // Import the
 import 'package:parent_link/helper/uuid.dart' as globals;
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
@@ -119,27 +118,34 @@ class _MainPageState extends State<MainPage> {
               role: _role,
             ),
             body: pages[_selectedIndex],
-            floatingActionButton: FloatingActionButton(
-              backgroundColor: _isForegroundServiceRunning ? Colors.red : Colors.blue,
-              onPressed: () async {
-                bool locationServiceEnabled = await _checkLocationEnable();
-                if (!locationServiceEnabled) return;
-                setState(() {
-                  if (_isForegroundServiceRunning) {
-                    _foregroundService.stopService();
-                    print('Foreground Service Stopped');
-                  } else {
-                    _foregroundService.startService();
-                    print('Foreground Service Started');
-                  }
-                  _isForegroundServiceRunning = !_isForegroundServiceRunning;
-                });
-              },
-              child: Icon(
-                _isForegroundServiceRunning ? Icons.stop : Icons.play_arrow,
-                color: Colors.white,
-              ),
-            ),
+            floatingActionButton: (_role == 'children')
+                ? FloatingActionButton(
+                    backgroundColor:
+                        _isForegroundServiceRunning ? Colors.red : Colors.blue,
+                    onPressed: () async {
+                      bool locationServiceEnabled =
+                          await _checkLocationEnable();
+                      if (!locationServiceEnabled) return;
+                      setState(() {
+                        if (_isForegroundServiceRunning) {
+                          _foregroundService.stopService();
+                          print('Foreground Service Stopped');
+                        } else {
+                          _foregroundService.startService();
+                          print('Foreground Service Started');
+                        }
+                        _isForegroundServiceRunning =
+                            !_isForegroundServiceRunning;
+                      });
+                    },
+                    child: Icon(
+                      _isForegroundServiceRunning
+                          ? Icons.stop
+                          : Icons.play_arrow,
+                      color: Colors.white,
+                    ),
+                  )
+                : null,
           );
         }
       },
@@ -161,7 +167,8 @@ class _MainPageState extends State<MainPage> {
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  Geolocator.openLocationSettings();
+                  Navigator.pop(context);
                 },
                 child: Text('OK'),
               ),
@@ -173,11 +180,10 @@ class _MainPageState extends State<MainPage> {
       // accessing the position and request users of the
       // App to enable the location services.
       return false;
-    }else {
+    } else {
       return true;
     }
   }
-
 
   Future<void> _requestLocationPermission() async {
     LocationPermission permission;
@@ -209,5 +215,4 @@ class _MainPageState extends State<MainPage> {
       _isForegroundServiceRunning = isRunning;
     });
   }
-
 }

@@ -1,7 +1,10 @@
 import 'dart:io';
+import 'package:parent_link/theme/colors.dart';
+import 'package:provider/provider.dart';
 
 import 'package:flutter/material.dart';
 import 'package:parent_link/model/child/child_state.dart';
+import 'package:parent_link/model/control/control_child_state.dart';
 import 'package:parent_link/pages/home/location_page.dart';
 import 'package:parent_link/theme/app.theme.dart';
 
@@ -29,106 +32,181 @@ class ChildStateTile extends StatelessWidget {
     Color background = backgroundColor[index % backgroundColor.length];
 
     return Positioned(
-      top: (150 * index).toDouble(),
-      left: 0,
-      right: 0,
-      child: GestureDetector(
-        onTap: () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => LocationPage(childState: childState!),
-          ),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              stops: [0.0, 0.7],
-              colors: [background.withOpacity(1), background.withOpacity(0.5)],
-            ),
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(
-              color: Apptheme.colors.white,
-              width: 1,
+        top: (150 * index).toDouble(),
+        left: 0,
+        right: 0,
+        child: GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => LocationPage(childState: childState!),
             ),
           ),
-          child: Stack(
-            children: [
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                stops: [0.0, 0.7],
+                colors: [
+                  background.withOpacity(1),
+                  background.withOpacity(0.5)
+                ],
+              ),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: Apptheme.colors.white,
+                width: 1,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Padding(
+                  padding:
+                      const EdgeInsets.only(left: 20.0, top: 30, bottom: 50),
+                  child: Row(
+                    children: [
+                      // Avatar with circular border
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: Apptheme.colors.white,
+                            width: 2,
+                          ),
+                          shape: BoxShape.circle,
+                        ),
+                        child: CircleAvatar(
+                          radius: 35,
+                          backgroundImage: childState!.avatarPath != null
+                              ? FileImage(File(childState!.avatarPath!))
+                              : const AssetImage(ChildState.defaultImage)
+                                  as ImageProvider,
+                        ),
+                      ),
+                      const SizedBox(width: 35), // Use SizedBox for spacing
+
+                      // Child's info
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            childState!.name,
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            childState!.activity,
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 10),
+
+                          // Status indicators
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              _buildStatusContainer(
+                                icon: Icons.turn_right,
+                                text: "${childState!.distance}m",
+                              ),
+                              const SizedBox(width: 8),
+                              _buildStatusContainer(
+                                icon: _getBatteryIcon(childState!.battery),
+                                text: "${childState!.battery}%",
+                              ),
+                              const SizedBox(width: 8),
+                              _buildStatusContainer(
+                                text: childState!.state,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
               Padding(
-                padding: const EdgeInsets.only(left: 20.0, top: 30, bottom: 50),
-                child: Row(
-                  children: [
-                    // Avatar with circular border
-                    Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(
-                          color: Apptheme.colors.white,
-                          width: 2,
-                        ),
-                        shape: BoxShape.circle,
+                padding: const EdgeInsets.all(8.0),
+                child: Align(
+                alignment: Alignment.topRight,
+                child: GestureDetector(
+                  onTap: () {
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: Colors.white, 
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(10)), 
                       ),
-                      child: CircleAvatar(
-                        radius: 35,
-                        backgroundImage: childState!.avatarPath != null
-                            ? FileImage(File(childState!.avatarPath!))
-                            : const AssetImage(ChildState.defaultImage)
-                                as ImageProvider,
-                      ),
-                    ),
-                    const SizedBox(width: 35), // Use SizedBox for spacing
-
-                    // Child's info
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          childState!.name,
-                          style: const TextStyle(fontSize: 20),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          childState!.activity,
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        const SizedBox(height: 10),
-
-                        // Status indicators
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                      builder: (BuildContext context) {
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
-                            _buildStatusContainer(
-                              icon: Icons.turn_right,
-                              text: "${childState!.distance}m",
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                              child: Container(
+                                width: 40,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade400,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
                             ),
-                            const SizedBox(width: 8),
-                            _buildStatusContainer(
-                              icon: _getBatteryIcon(childState!.battery),
-                              text: "${childState!.battery}%",
-                            ),
-                            const SizedBox(width: 8),
-                            _buildStatusContainer(
-                              text: childState!.state,
+                            ListTile(
+                              leading: const Icon(Icons.delete, color: Colors.red),
+                              title: const Text('Delete', style: TextStyle(color: Colors.red)),
+                              onTap: () async {
+                                Navigator.of(context).pop(); 
+                                final bool? confirmed = await showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: const Text('Confirm Delete'),
+                                      content: const Text('Are you sure you want to delete this child?'),
+                                      actions: <Widget>[
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(false), 
+                                          child: const Text('Cancel', style: TextStyle(color: Colors.black)),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.of(context).pop(true), 
+                                          child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                
+                                if (confirmed == true) {
+                                  try {
+                                    await context
+                                        .read<ControlChildState>()
+                                        .deleteChild(childState!.childId!);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Child deleted successfully')),
+                                    );
+                                  } catch (e) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Failed to delete child: $e')),
+                                    );
+                                    print(e);
+                                  }
+                                }
+                              },
                             ),
                           ],
-                        ),
-                      ],
-                    ),
-                  ],
+                        );
+                      },
+                    );
+                  },
+                  child: const Icon(Icons.more_horiz), 
+                ),
                 ),
               ),
-              Align(
-                alignment: Alignment.topRight,
-                child: IconButton(
-                  icon: const Icon(Icons.more_horiz),
-                  onPressed: () {},
-                ),
-              ),
-            ],
+
+              ],
+            ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 
   // Helper method to build status container

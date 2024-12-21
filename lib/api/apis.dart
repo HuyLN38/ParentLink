@@ -145,7 +145,6 @@ class Apis {
     final chatUser = ChatUser(
         id: uuid,
         name: username,
-        about: "I'm using Chat Web",
         createdAt: time,
         image: await AvatarManager.getOrUpdateAvatar(
             uuid,
@@ -160,21 +159,26 @@ class Apis {
   static Stream<QuerySnapshot<Map<String, dynamic>>> getAllUser(
       List<String> userIds) {
     final ids = firestore
-      .collection('users')
-      .where('localId', whereIn: userIds)
-      .snapshots();
+        .collection('users')
+        .where('localId', whereIn: userIds)
+        .snapshots();
 
     SharedPreferences.getInstance().then((prefs) async {
-      for (var id in userIds) {
+      final tasks = userIds.map((id) async {
+        final avatarUrl =
+            'https://huyln.info/parentlink/users/${me.id}/children-avatar/$id';
+        final lastModified = prefs.getString('avatar_last_modified_$id') ??
+            "1970-01-01T00:00:00Z";
+
         try {
-          await AvatarManager.getOrUpdateAvatar(
-              id,
-              'https://huyln.info/parentlink/users/${me.id}/children-avatar/$id',
-              (prefs.getString('avatar_last_modified_$id') ?? '0'));
+          await AvatarManager.getOrUpdateAvatar(id, avatarUrl, lastModified);
         } catch (e) {
-          log('Error getting avatar: $e');
+          log('Error updating avatar for $id: $e');
         }
-      }
+      });
+
+      // Run all avatar update tasks in parallel
+      await Future.wait(tasks);
     });
 
     return ids;

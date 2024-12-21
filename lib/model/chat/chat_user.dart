@@ -11,7 +11,6 @@ class ChatUser {
 
   ChatUser(
       {this.image,
-      this.about,
       this.name,
       this.createdAt,
       this.isOnline,
@@ -21,7 +20,6 @@ class ChatUser {
 
   ChatUser.fromJson(Map<String, dynamic> json) {
     image = json['image'];
-    about = json['about'];
     name = json['name'];
     createdAt = json['created_at'];
     isOnline = json['is_online'];
@@ -32,14 +30,13 @@ class ChatUser {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['image'] = this.image;
-    data['about'] = this.about;
-    data['name'] = this.name;
-    data['created_at'] = this.createdAt;
-    data['is_online'] = this.isOnline;
-    data['last_active'] = this.lastActive;
-    data['localId'] = this.id;
-    data['push_token'] = this.pushToken;
+    data['image'] = image;
+    data['name'] = name;
+    data['created_at'] = createdAt;
+    data['is_online'] = isOnline;
+    data['last_active'] = lastActive;
+    data['localId'] = id;
+    data['push_token'] = pushToken;
     return data;
   }
 }

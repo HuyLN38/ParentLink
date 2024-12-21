@@ -6,17 +6,38 @@ import 'package:parent_link/model/child/child_state.dart';
 import 'package:parent_link/model/control/control_child_location.dart';
 import 'package:parent_link/theme/app.theme.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class LocationPage extends StatelessWidget {
-  final ChildState childState;
+class LocationPage extends StatefulWidget {
+ final ChildState childState;
 
-  LocationPage({super.key, required this.childState});
+    const LocationPage({
+    super.key,
+    required this.childState, 
+  });
 
   @override
+  State<LocationPage> createState() => _LocationPageState();
+}
+
+class _LocationPageState extends State<LocationPage> {
+@override
+  void initState() {
+    super.initState();
+  _initialization();
+  }
+  Future<void> _initialization() async{
+    final provider = Provider.of<ControlChildLocation>(context, listen: false);
+    provider.fetchChildLocations( widget.childState.childId);
+  }
+  @override
   Widget build(BuildContext context) {
+      final childStateList = context.watch<ControlChildLocation>().getChildLocationList;
     //access child' location list
-    final childStateList =
-        context.watch<ControlChildLocation>().getChildLocationList;
+
+
+
+
     return Scaffold(
       backgroundColor: Apptheme.colors.white,
       // appBar: AppBar(
@@ -36,13 +57,14 @@ class LocationPage extends StatelessWidget {
               )),
 
           //turn back icom
-          Align(
-              alignment: Alignment.topLeft,
+          Positioned(
+              top: 20,
+              left: 0,
               child: Container(
                 margin: EdgeInsets.only(top: 18),
                 child: IconButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/main_page');
+                    Navigator.pop(context);
                   },
                   icon: Icon(Icons.chevron_left),
                   iconSize: 40,
@@ -86,7 +108,7 @@ class LocationPage extends StatelessWidget {
                     ),
                     //name
                     Text(
-                      childState.name,
+                      widget.childState.name,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
@@ -95,7 +117,7 @@ class LocationPage extends StatelessWidget {
                     ),
                     //current activity
                     Text(
-                      'Located on the Viking',
+                      'Located on ${childStateList[0].location}',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Apptheme.colors.gray,
@@ -134,8 +156,8 @@ class LocationPage extends StatelessWidget {
                 ),
                 child: CircleAvatar(
                   radius: 50,
-                  backgroundImage: childState.avatarPath != null
-                      ? FileImage(File(childState.avatarPath!))
+                  backgroundImage: widget.childState.avatarPath != null
+                      ? FileImage(File(widget.childState.avatarPath!))
                       : AssetImage(ChildState.defaultImage) as ImageProvider,
                 ),
               ),
@@ -148,15 +170,20 @@ class LocationPage extends StatelessWidget {
             left: 0,
             right: 0,
             bottom: 0,
-            child: SingleChildScrollView(
-              child: Column(
-                children: childStateList.map((childLocation) {
-                  return ChildLocationTile(childLocation: childLocation);
-                }).toList(),
+            child: RefreshIndicator(
+              onRefresh: _initialization,
+              child: ListView(
+                children: List.generate(childStateList.length, (index) {
+                  final childLocation = childStateList[index];
+                  return ChildLocationTile(
+                    childLocation: childLocation,
+                    isFirstElement: index == 0,
+                  );
+                }),
               ),
             ),
           ),
-
+          
           //call and message button
           Positioned(
               bottom: 20,

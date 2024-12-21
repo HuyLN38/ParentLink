@@ -59,4 +59,32 @@ class ControlChildState extends ChangeNotifier {
       rethrow;
     }
   }
+
+  Future<void> deleteChild(String childId) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('token');
+
+      if (token == null || token.isEmpty) {
+        throw Exception('No authentication token found');
+      }
+
+      final response = await http.delete(
+        Uri.parse(
+            'https://huyln.info/parentlink/users/$token/children/$childId'),
+      );
+
+      if (response.statusCode == 200) {
+        listChild.removeWhere((child) => child.childId == childId);
+        notifyListeners();
+        // Successfully deleted the child
+        print('Child deleted successfully');
+      } else {
+        throw Exception('Failed to delete child');
+      }
+    } catch (e) {
+      print('Error deleting child: $e');
+      rethrow;
+    }
+  }
 }
