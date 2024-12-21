@@ -4,9 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:parent_link/model/child/child_location.dart';
 
 class ControlChildLocation extends ChangeNotifier {
-  List<ChildLocation> childLocationList = [
-          ChildLocation("", "")
-  ];
+  List<ChildLocation> childLocationList = [];
   List<ChildLocation> get getChildLocationList => childLocationList;
 
   Future<void> fetchChildLocations(String childId) async {

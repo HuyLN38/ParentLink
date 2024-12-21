@@ -117,13 +117,15 @@ class _LocationPageState extends State<LocationPage> {
                     ),
                     //current activity
                     Text(
-                      'Located on ${childStateList[0].location}',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Apptheme.colors.gray,
-                        fontSize: 16,
-                      ),
+                    childStateList.isNotEmpty && childStateList[0].location != null
+                        ? 'Located on ${childStateList[0].location}'
+                        : 'Location not available',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Apptheme.colors.gray,
+                      fontSize: 16,
                     ),
+                  ),
                     const SizedBox(
                       height: 4,
                     ),
