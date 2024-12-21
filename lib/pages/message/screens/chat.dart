@@ -369,9 +369,8 @@ class _ChatScreenState extends State<ChatScreen> {
                       color: Colors.black54,
                       fontWeight: FontWeight.normal,
                     ),
-                  ],
+
                 ),
-              ),
               IconButton(
                 onPressed: _handleCall,
                 icon: Icon(
@@ -380,7 +379,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
               ),
             ],
-          );
+          )]);
         },
       ),
     );
