@@ -171,7 +171,7 @@ class FirstTaskHandler extends TaskHandler {
       if (lastPosition == null) {
         lastPosition = currentPosition;
         stopPossition = currentPosition;
-        await _sendData();
+        await _sendData(lastPosition);
         return;
       }
 
@@ -192,13 +192,15 @@ class FirstTaskHandler extends TaskHandler {
       if (!isMoving && currentSpeed > stopSpeed && isInGeoFen) {
         isMoving = true;
         lastPosition = currentPosition;
-        await _sendData();
+        await _sendData(lastPosition);
         return;
       }
 
       if (isMoving && currentSpeed < stopSpeed && !isInGeoFen) {
         isMoving = false;
         stopPossition = currentPosition;
+        _sendStopData(stopPossition);
+        _sendData(currentPosition);
         // TODO: Add function to send the stop point
         return;
       }
@@ -221,7 +223,7 @@ class FirstTaskHandler extends TaskHandler {
 
       // Update last position and send data if movement is detected
       lastPosition = currentPosition;
-      await _sendData();
+      await _sendData(lastPosition);
     } catch (e) {
       print('Error in _sendDataIfNeed: $e');
     }
@@ -288,7 +290,7 @@ class FirstTaskHandler extends TaskHandler {
     return distance;
   }
 
-  Future<void> _sendData() async {
+  Future<void> _sendData(geo.Position? locationData) async {
     try {
       // Update notification to show sending status
       await FlutterForegroundTask.updateService(
@@ -306,15 +308,6 @@ class FirstTaskHandler extends TaskHandler {
         throw Exception(
             'Missing authentication data: parentId or token not found');
       }
-
-      // Get location data with timeout
-      final locationData = await geo.Geolocator.getCurrentPosition(
-          locationSettings: locationSettings);
-      // Validate location data
-      if (locationData.latitude == null || locationData.longitude == null) {
-        throw Exception('Invalid location data received');
-      }
-
       // Get battery level
       final batteryLevel = await _battery.batteryLevel;
 
@@ -322,9 +315,10 @@ class FirstTaskHandler extends TaskHandler {
       final url = Uri.parse(
           'https://huyln.info/parentlink/users/$parentId/children/$token');
       final payload = jsonEncode({
-        'longitude': locationData.longitude,
+        'longitude': locationData!.longitude,
         'latitude': locationData.latitude,
-        'speed': speedConvertToKm(locationData.speed) ??  0, // Use 0 as default if speed is null
+        'speed': speedConvertToKm(locationData.speed) ??
+            0, // Use 0 as default if speed is null
         'battery': batteryLevel,
         'timestamp': DateTime.now().toIso8601String(),
       });
@@ -353,8 +347,90 @@ class FirstTaskHandler extends TaskHandler {
         await FlutterForegroundTask.updateService(
           notificationTitle: 'Location Updated',
           notificationText:
-              'Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}',
-              'Last update: ${DateTime.now().toString().substring(11, 16)}',
+              'Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}' +
+                  'Last update: ${DateTime.now().toString().substring(11, 16)}',
+        );
+      } else {
+        print(
+            'Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}');
+        throw Exception(
+            'Server error: ${response.statusCode}\nBody: ${response.body}');
+      }
+    } catch (e) {
+      print('Error sending data: $e');
+
+      // Update notification to show error
+      await FlutterForegroundTask.updateService(
+        notificationTitle: 'Update Failed',
+        notificationText: '$e',
+      );
+
+      // Optional: Store failed update for retry
+      await _storeFailedUpdate();
+    }
+  }
+
+  Future<void> _sendStopData(geo.Position? locationData) async {
+    try {
+      // Update notification to show sending status
+      await FlutterForegroundTask.updateService(
+        notificationTitle: 'Updating stop Location',
+        notificationText: 'Sending data...',
+      );
+
+      // Get stored credentials
+      final prefs = await SharedPreferences.getInstance();
+      final parentId = prefs.getString('parentId');
+      final token = prefs.getString('token');
+
+      // Validate credentials
+      if (parentId == null || token == null) {
+        throw Exception(
+            'Missing authentication data: parentId or token not found');
+      }
+      // Get battery level
+      final batteryLevel = await _battery.batteryLevel;
+
+      // Prepare API call
+      // change stop uri api
+      final url = Uri.parse(
+          'https://huyln.info/parentlink/users/$parentId/children/$token');
+      final payload = jsonEncode({
+        'longitude': locationData!.longitude,
+        'latitude': locationData.latitude,
+        'speed': speedConvertToKm(locationData.speed) ??
+            0, // Use 0 as default if speed is null
+        'battery': batteryLevel,
+        'timestamp': DateTime.now().toIso8601String(),
+      });
+
+      // Send data with timeout
+      // change stop request
+      final response = await http
+          .put(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: payload,
+          )
+          .timeout(
+            const Duration(seconds: 30),
+            onTimeout: () => throw TimeoutException('API request timed out'),
+          );
+
+      // Handle response
+      if (response.statusCode == 200) {
+        print('Data sent successfully!');
+        print(
+            'Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}');
+        print('Battery: $batteryLevel%');
+
+        await FlutterForegroundTask.updateService(
+          notificationTitle: 'Location Updated',
+          notificationText:
+              'Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}' +
+                  'Last update: ${DateTime.now().toString().substring(11, 16)}',
         );
       } else {
         print(
