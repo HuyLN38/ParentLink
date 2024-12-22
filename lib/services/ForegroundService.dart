@@ -113,7 +113,7 @@ class FirstTaskHandler extends TaskHandler {
   geo.Position? currentPosition;
   geo.Position? lastPosition;
   geo.Position? stopPossition;
-  bool isMoving = false;
+  bool initStop = false;
   bool isInGeoFen = false;
   double stopSpeed = 2;
   double geoFenRadius = 50;
@@ -163,7 +163,14 @@ class FirstTaskHandler extends TaskHandler {
 
       // Convert speed to km/h
 
+      // final double currentSpeed = lowPassFilter(
+      //     speedConvertToKm(lastPosition?.speed ?? 0),
+      //     speedConvertToKm(currentPosition?.speed ?? 0),
+      //     0.2);
+
       final double currentSpeed = speedConvertToKm(currentPosition?.speed ?? 0);
+      final double distanceMoved = calDistance(lastPosition, currentPosition);
+
       if (lastPosition == null) {
         lastPosition = currentPosition;
         stopPossition = currentPosition;
@@ -171,36 +178,39 @@ class FirstTaskHandler extends TaskHandler {
         return;
       }
 
+      //check for the init possition
+      if (!initStop && currentSpeed < stopSpeed) {
+        initStop = true;
+        stopPossition = currentPosition;
+        _sendStopData(stopPossition);
+        _sendData(currentPosition);
+        return;
+      }
+
+      if (!initStop && currentSpeed > stopSpeed) {
+        if (distanceMoved < 15) {
+          await _logSpeedAndUpdateNotification(
+              currentSpeed, 'Location does not change');
+          return;
+        } else {
+          lastPosition = currentPosition;
+          await _sendData(lastPosition);
+          return;
+        }
+      }
       // Check and update geo-fence and movement state
       checkInGeoFen();
-      // checkMovingState();
 
-      // Define conditions for stopping or moving
-      if (!isMoving && currentSpeed < stopSpeed) {
-        if (stopPossition == null) {
-          stopPossition =
-              currentPosition; // Assign stop position if not already set
-          print('Stop position recorded: $stopPossition');
-        }
-        return; // No action needed if stationary and below stopSpeed
-      }
-
-      if (!isMoving && currentSpeed > stopSpeed && isInGeoFen) {
-        isMoving = true;
+      //Get out of the geofence and being moving dont make new stop point
+      if (initStop && currentSpeed > stopSpeed && !isInGeoFen) {
+        initStop = false;
         lastPosition = currentPosition;
         await _sendData(lastPosition);
         return;
       }
 
-      if (!isMoving && currentSpeed > stopSpeed && !isInGeoFen) {
-        isMoving = true;
-        lastPosition = currentPosition;
-        await _sendData(lastPosition);
-        return;
-      }
-
-      if (isMoving && currentSpeed < stopSpeed && !isInGeoFen) {
-        isMoving = false;
+      //get out the geofence and stop => mk new stop point
+      if (initStop && currentSpeed < stopSpeed && !isInGeoFen) {
         stopPossition = currentPosition;
         _sendStopData(stopPossition);
         _sendData(currentPosition);
@@ -208,31 +218,18 @@ class FirstTaskHandler extends TaskHandler {
         return;
       }
 
-      final double distanceMoved = calDistance(lastPosition, currentPosition);
-
-      if (isMoving &&
-          currentSpeed < stopSpeed &&
-          isInGeoFen &&
-          distanceMoved > 15) {
-        isMoving = false;
-        _sendData(currentPosition);
-        return;
+      //the stop point was inited and child in geoFen => dont care speed just send data
+      if (initStop && isInGeoFen) {
+        if (distanceMoved < 15) {
+          await _logSpeedAndUpdateNotification(
+              currentSpeed, 'Location does not change');
+          return;
+        } else {
+          lastPosition = currentPosition;
+          await _sendData(lastPosition);
+          return;
+        }
       }
-      // Calculate distance
-
-      if (isMoving && distanceMoved < 15) {
-        await _logSpeedAndUpdateNotification(
-            currentSpeed, 'Location does not change');
-        return;
-      }
-
-      if (!isMoving &&
-          calDistanceWithFilter(lastPosition, currentPosition) < 15) {
-        await _logSpeedAndUpdateNotification(
-            currentSpeed, 'Location does not change');
-        return;
-      }
-
       // Update last position and send data if movement is detected
       lastPosition = currentPosition;
       await _sendData(lastPosition);
@@ -406,7 +403,7 @@ class FirstTaskHandler extends TaskHandler {
       // Prepare API call
       // change stop uri api
       final url = Uri.parse(
-          'https://huyln.info/parentlink/users/$parentId/children/$token');
+          'https://huyln.info/parentlink/users/children-location/$token');
       final payload = jsonEncode({
         'longitude': locationData!.longitude,
         'latitude': locationData.latitude,
@@ -419,7 +416,7 @@ class FirstTaskHandler extends TaskHandler {
       // Send data with timeout
       // change stop request
       final response = await http
-          .put(
+          .post(
             url,
             headers: {
               'Content-Type': 'application/json',
@@ -433,7 +430,7 @@ class FirstTaskHandler extends TaskHandler {
 
       // Handle response
       if (response.statusCode == 200) {
-        print('Data sent successfully!');
+        print('Stop Data sent successfully!');
         print(
             'Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}');
         print('Battery: $batteryLevel%');
@@ -448,10 +445,10 @@ class FirstTaskHandler extends TaskHandler {
         print(
             'Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}');
         throw Exception(
-            'Server error: ${response.statusCode}\nBody: ${response.body}');
+            'Server error: ${response.statusCode}\nBody: ${response.body} stop error');
       }
     } catch (e) {
-      print('Error sending data: $e');
+      print('Error sending stop data: $e');
 
       // Update notification to show error
       await FlutterForegroundTask.updateService(
