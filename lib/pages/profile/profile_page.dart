@@ -1,12 +1,18 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:parent_link/model/control/control_main_user.dart';
 import 'package:parent_link/theme/app.theme.dart';
+import 'package:provider/provider.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
+  
 }
+
 
 class _ProfilePageState extends State<ProfilePage> {
   bool isPushNotif = false;
@@ -16,7 +22,8 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Apptheme.colors.gray_light,
-      body: Stack(
+      body: Consumer<ControlMainUser>(builder: (context, user, child){
+        return Stack(
         children: [
           // Profile settings bar
           Positioned(
@@ -57,11 +64,13 @@ class _ProfilePageState extends State<ProfilePage> {
                       children: [
                         CircleAvatar(
                           radius: 25,
-                          backgroundImage: AssetImage('assets/img/avatar_mom.png'),
+                          backgroundImage: user.image!=null && user.image.isNotEmpty
+                          ? FileImage(File(user.image)) 
+                          : AssetImage('assets/img/avatar_mom.png') as ImageProvider,
                         ),
                         const SizedBox(width: 10),
                         Text(
-                          "Sarah",
+                          user.username,
                           style: TextStyle(
                             fontWeight: FontWeight.w500,
                             fontSize: 20,
@@ -158,7 +167,8 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
           ),
         ],
-      ),
+      );
+      })
     );
   }
 

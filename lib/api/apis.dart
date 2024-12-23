@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:flutter/material.dart';
 import 'package:parent_link/helper/uuid.dart' as globals;
+import 'package:parent_link/model/control/control_main_user.dart';
+import 'package:provider/provider.dart';
 import '../helper/avatar_manager.dart';
 import 'dart:io';
 
@@ -137,6 +140,7 @@ class Apis {
     });
   }
 
+  // User
   static Future<void> createUser(
       String uuid, String username, String imageURL) async {
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -155,6 +159,50 @@ class Apis {
         pushToken: '');
     return await firestore.collection('users').doc(uuid).set(chatUser.toJson());
   }
+
+  Future<void> updateUser(String userId, String name, String phone, {String? image}) async {
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(userId).update({
+        'name': name,
+        'phoneNumber': phone,
+        if (image != null) 'image': image,
+        'updatedAt': Timestamp.now(),
+      });
+      log("Profile updated successfully!");      
+    } catch (e) {
+      log("Failed to update profile.");
+    }
+  }
+
+Future<void> getMainUserInfor(BuildContext context) async {
+  try {
+    // get in4 user from Firestore
+    DocumentSnapshot userDoc = await FirebaseFirestore.instance.collection('users').doc(globals.token).get();
+
+    if (userDoc.exists) {
+      var userData = userDoc.data() as Map<String, dynamic>;
+
+      // get notifier from Provider
+      final mainUser = Provider.of<ControlMainUser>(context, listen: false);
+
+      // update in4 to notifier
+      mainUser.updateUser(
+        userData['name'] ?? 'Parent', 
+        userData['phoneNumber'] ?? 'Parent', 
+        userData['image'] ?? 'assets/img/avatar_mom.png', 
+      );
+
+      log('User information saved to ControlMainUser');
+    } else {
+      log('User not found in Firestore');
+    }
+  } catch (e) {
+    log('Error fetching user information: $e');
+  }
+}
+
+
+
 
   static Stream<QuerySnapshot<Map<String, dynamic>>> getAllUser(
       List<String> userIds) {
