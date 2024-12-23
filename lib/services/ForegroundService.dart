@@ -4,10 +4,9 @@ import 'dart:io';
 
 import 'package:battery_plus/battery_plus.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-
 import 'package:geolocator/geolocator.dart' as geo;
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ForegroundService {
   Timer? _timer;
@@ -113,10 +112,11 @@ class FirstTaskHandler extends TaskHandler {
   geo.Position? currentPosition;
   geo.Position? lastPosition;
   geo.Position? stopPossition;
-  bool initStop = false;
-  bool isInGeoFen = false;
+  bool initStop = true;
+  bool isInGeoFen = true;
   double stopSpeed = 2;
   double geoFenRadius = 50;
+  double currentSpeed = 0;
 
   final geo.LocationSettings locationSettings = geo.LocationSettings(
     accuracy: geo.LocationAccuracy.high,
@@ -157,6 +157,13 @@ class FirstTaskHandler extends TaskHandler {
       currentPosition = await geo.Geolocator.getCurrentPosition(
         locationSettings: locationSettings,
       );
+      if (lastPosition == null) {
+        print('lastPosition is null, initializing with currentPosition.');
+        lastPosition = currentPosition;
+        stopPossition = currentPosition;
+        await _sendData(lastPosition);
+        return;
+      }
       print('currentPosition: $currentPosition');
       print('lastPosition: $lastPosition');
       print('stoptPosition: $stopPossition');
@@ -168,22 +175,26 @@ class FirstTaskHandler extends TaskHandler {
       //     speedConvertToKm(currentPosition?.speed ?? 0),
       //     0.2);
 
-      final double currentSpeed = speedConvertToKm(currentPosition?.speed ?? 0);
+      currentSpeed = speedConvertToKm(currentPosition?.speed ?? 0);
       final double distanceMoved = calDistance(lastPosition, currentPosition);
 
-      if (lastPosition == null) {
-        lastPosition = currentPosition;
-        stopPossition = currentPosition;
-        await _sendData(lastPosition);
-        return;
-      }
+      // Check and update geo-fence and movement state
+      checkInGeoFen();
+      updateInitStopState();
 
       //check for the init possition
+      print(
+          'Before check: initStop=$initStop, currentSpeed=$currentSpeed, isInGeoFen=$isInGeoFen');
+
       if (!initStop && currentSpeed < stopSpeed) {
-        initStop = true;
-        stopPossition = currentPosition;
-        _sendStopData(stopPossition);
-        _sendData(currentPosition);
+        if (stopPossition != currentPosition) {
+          // Check if stop position is new
+          initStop = true;
+          stopPossition = currentPosition;
+          _sendStopData(stopPossition);
+          print("ca 1");
+          _sendData(currentPosition);
+        }
         return;
       }
 
@@ -198,12 +209,9 @@ class FirstTaskHandler extends TaskHandler {
           return;
         }
       }
-      // Check and update geo-fence and movement state
-      checkInGeoFen();
 
       //Get out of the geofence and being moving dont make new stop point
       if (initStop && currentSpeed > stopSpeed && !isInGeoFen) {
-        initStop = false;
         lastPosition = currentPosition;
         await _sendData(lastPosition);
         return;
@@ -211,6 +219,7 @@ class FirstTaskHandler extends TaskHandler {
 
       //get out the geofence and stop => mk new stop point
       if (initStop && currentSpeed < stopSpeed && !isInGeoFen) {
+        print("ca 2");
         stopPossition = currentPosition;
         _sendStopData(stopPossition);
         _sendData(currentPosition);
@@ -238,6 +247,14 @@ class FirstTaskHandler extends TaskHandler {
     }
   }
 
+  void updateInitStopState() {
+    if (!isInGeoFen && initStop) {
+      initStop = false; // Only reset when actually needed
+    } else {
+      initStop = true;
+    }
+  }
+
   Future<void> _logSpeedAndUpdateNotification(
       double speed, String message) async {
     // await _writeSpeedToFile(speed);
@@ -256,7 +273,7 @@ class FirstTaskHandler extends TaskHandler {
       isInGeoFen = false;
       return;
     }
-    if (calDistance(currentPosition, stopPossition) < geoFenRadius) {
+    if (calDistance(currentPosition, stopPossition) > geoFenRadius) {
       isInGeoFen = false;
     } else {
       isInGeoFen = true;
