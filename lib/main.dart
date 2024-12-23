@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:parent_link/model/control/control_main_user.dart';
 import 'package:parent_link/pages/open_page.dart';
 import 'package:parent_link/pages/main_page.dart';
 import 'package:parent_link/routes/routes.dart';
@@ -59,6 +60,8 @@ class MyApp extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => ControlChildState()),
         ChangeNotifierProvider(create: (_) => ControlChildLocation()),
+        ChangeNotifierProvider(create: (_) => ControlMainUser()),
+
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,

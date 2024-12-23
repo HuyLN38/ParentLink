@@ -36,6 +36,7 @@ class ChatUser {
     data['is_online'] = isOnline;
     data['last_active'] = lastActive;
     data['localId'] = id;
+    data['phone'] = id;
     data['push_token'] = pushToken;
     return data;
   }

@@ -27,6 +27,7 @@ class _MainPageState extends State<MainPage> {
   //this selected index is to control the bottom nav bar
   int _selectedIndex = 0;
   bool _isForegroundServiceRunning = false;
+  final apis = Apis();
 
   late Future<List<Widget>> _pagesFuture;
   String? _role;
@@ -66,6 +67,7 @@ class _MainPageState extends State<MainPage> {
   Future<void> _initializeApp() async {
     _pagesFuture = loadPages();
     Apis.getFirebaseMessagingToken();
+    apis.getMainUserInfor(context);
     await _requestLocationPermission();
     await _startForegroundServiceIfNeeded();
   }
