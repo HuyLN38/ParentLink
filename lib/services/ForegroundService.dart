@@ -1,17 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:ui';
 
 import 'package:battery_plus/battery_plus.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-import 'package:location/location.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
-
 import 'package:geolocator/geolocator.dart' as geo;
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ForegroundService {
   Timer? _timer;
@@ -117,10 +112,11 @@ class FirstTaskHandler extends TaskHandler {
   geo.Position? currentPosition;
   geo.Position? lastPosition;
   geo.Position? stopPossition;
-  bool isMoving = true;
+  bool initStop = true;
   bool isInGeoFen = true;
   double stopSpeed = 2;
   double geoFenRadius = 50;
+  double currentSpeed = 0;
 
   final geo.LocationSettings locationSettings = geo.LocationSettings(
     accuracy: geo.LocationAccuracy.high,
@@ -161,43 +157,69 @@ class FirstTaskHandler extends TaskHandler {
       currentPosition = await geo.Geolocator.getCurrentPosition(
         locationSettings: locationSettings,
       );
+      if (lastPosition == null) {
+        print('lastPosition is null, initializing with currentPosition.');
+        lastPosition = currentPosition;
+        stopPossition = currentPosition;
+        await _sendData(lastPosition);
+        return;
+      }
       print('currentPosition: $currentPosition');
       print('lastPosition: $lastPosition');
       print('stoptPosition: $stopPossition');
 
       // Convert speed to km/h
 
-      final double currentSpeed = speedConvertToKm(currentPosition?.speed ?? 0);
-      if (lastPosition == null) {
-        lastPosition = currentPosition;
-        stopPossition = currentPosition;
-        await _sendData(lastPosition);
-        return;
-      }
+      // final double currentSpeed = lowPassFilter(
+      //     speedConvertToKm(lastPosition?.speed ?? 0),
+      //     speedConvertToKm(currentPosition?.speed ?? 0),
+      //     0.2);
+
+      currentSpeed = speedConvertToKm(currentPosition?.speed ?? 0);
+      final double distanceMoved = calDistance(lastPosition, currentPosition);
 
       // Check and update geo-fence and movement state
       checkInGeoFen();
-      // checkMovingState();
+      updateInitStopState();
 
-      // Define conditions for stopping or moving
-      if (!isMoving && currentSpeed < stopSpeed) {
-        if (stopPossition == null) {
-          stopPossition =
-              currentPosition; // Assign stop position if not already set
-          print('Stop position recorded: $stopPossition');
+      //check for the init possition
+      print(
+          'Before check: initStop=$initStop, currentSpeed=$currentSpeed, isInGeoFen=$isInGeoFen');
+
+      if (!initStop && currentSpeed < stopSpeed) {
+        if (stopPossition != currentPosition) {
+          // Check if stop position is new
+          initStop = true;
+          stopPossition = currentPosition;
+          _sendStopData(stopPossition);
+          print("ca 1");
+          _sendData(currentPosition);
         }
-        return; // No action needed if stationary and below stopSpeed
+        return;
       }
 
-      if (!isMoving && currentSpeed > stopSpeed && isInGeoFen) {
-        isMoving = true;
+      if (!initStop && currentSpeed > stopSpeed) {
+        if (distanceMoved < 15) {
+          await _logSpeedAndUpdateNotification(
+              currentSpeed, 'Location does not change');
+          return;
+        } else {
+          lastPosition = currentPosition;
+          await _sendData(lastPosition);
+          return;
+        }
+      }
+
+      //Get out of the geofence and being moving dont make new stop point
+      if (initStop && currentSpeed > stopSpeed && !isInGeoFen) {
         lastPosition = currentPosition;
         await _sendData(lastPosition);
         return;
       }
 
-      if (isMoving && currentSpeed < stopSpeed && !isInGeoFen) {
-        isMoving = false;
+      //get out the geofence and stop => mk new stop point
+      if (initStop && currentSpeed < stopSpeed && !isInGeoFen) {
+        print("ca 2");
         stopPossition = currentPosition;
         _sendStopData(stopPossition);
         _sendData(currentPosition);
@@ -205,27 +227,31 @@ class FirstTaskHandler extends TaskHandler {
         return;
       }
 
-      // Calculate distance
-      final double distanceMoved = calDistance(lastPosition, currentPosition);
-
-      if (isMoving && distanceMoved < 15) {
-        await _logSpeedAndUpdateNotification(
-            currentSpeed, 'Location does not change');
-        return;
+      //the stop point was inited and child in geoFen => dont care speed just send data
+      if (initStop && isInGeoFen) {
+        if (distanceMoved < 15) {
+          await _logSpeedAndUpdateNotification(
+              currentSpeed, 'Location does not change');
+          return;
+        } else {
+          lastPosition = currentPosition;
+          await _sendData(lastPosition);
+          return;
+        }
       }
-
-      if (!isMoving &&
-          calDistanceWithFilter(lastPosition, currentPosition) < 15) {
-        await _logSpeedAndUpdateNotification(
-            currentSpeed, 'Location does not change');
-        return;
-      }
-
       // Update last position and send data if movement is detected
       lastPosition = currentPosition;
       await _sendData(lastPosition);
     } catch (e) {
       print('Error in _sendDataIfNeed: $e');
+    }
+  }
+
+  void updateInitStopState() {
+    if (!isInGeoFen && initStop) {
+      initStop = false; // Only reset when actually needed
+    } else {
+      initStop = true;
     }
   }
 
@@ -247,7 +273,7 @@ class FirstTaskHandler extends TaskHandler {
       isInGeoFen = false;
       return;
     }
-    if (calDistance(currentPosition, stopPossition) < geoFenRadius) {
+    if (calDistance(currentPosition, stopPossition) > geoFenRadius) {
       isInGeoFen = false;
     } else {
       isInGeoFen = true;
@@ -317,8 +343,8 @@ class FirstTaskHandler extends TaskHandler {
       final payload = jsonEncode({
         'longitude': locationData!.longitude,
         'latitude': locationData.latitude,
-        'speed': speedConvertToKm(locationData.speed) ??
-            0, // Use 0 as default if speed is null
+        'speed': speedConvertToKm(
+            locationData.speed), // Use 0 as default if speed is null
         'battery': batteryLevel,
         'timestamp': DateTime.now().toIso8601String(),
       });
@@ -394,7 +420,7 @@ class FirstTaskHandler extends TaskHandler {
       // Prepare API call
       // change stop uri api
       final url = Uri.parse(
-          'https://huyln.info/parentlink/users/$parentId/children/$token');
+          'https://huyln.info/parentlink/users/children-location/$token');
       final payload = jsonEncode({
         'longitude': locationData!.longitude,
         'latitude': locationData.latitude,
@@ -407,7 +433,7 @@ class FirstTaskHandler extends TaskHandler {
       // Send data with timeout
       // change stop request
       final response = await http
-          .put(
+          .post(
             url,
             headers: {
               'Content-Type': 'application/json',
@@ -421,7 +447,7 @@ class FirstTaskHandler extends TaskHandler {
 
       // Handle response
       if (response.statusCode == 200) {
-        print('Data sent successfully!');
+        print('Stop Data sent successfully!');
         print(
             'Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}');
         print('Battery: $batteryLevel%');
@@ -436,10 +462,10 @@ class FirstTaskHandler extends TaskHandler {
         print(
             'Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}');
         throw Exception(
-            'Server error: ${response.statusCode}\nBody: ${response.body}');
+            'Server error: ${response.statusCode}\nBody: ${response.body} stop error');
       }
     } catch (e) {
-      print('Error sending data: $e');
+      print('Error sending stop data: $e');
 
       // Update notification to show error
       await FlutterForegroundTask.updateService(
