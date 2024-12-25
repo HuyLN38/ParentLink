@@ -4,7 +4,6 @@ import 'package:parent_link/model/control/control_child_state.dart';
 import 'package:parent_link/model/control/control_main_user.dart';
 import 'package:parent_link/theme/app.theme.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});

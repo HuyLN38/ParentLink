@@ -13,6 +13,9 @@ import '../model/map/geofence_data.dart';
 import '../model/map/point_data.dart';
 import '../services/ChildrenProvider.dart';
 
+// 'assets/img/child1.png'
+// imageData
+
 class MapPage extends StatefulWidget {
   const MapPage({super.key});
 
@@ -310,7 +313,7 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
     );
   }
 
-  Widget _buildChildAvatar(Child child) {
+  Widget _buildChildAvatar(Child child, PointData point) {
     return GestureDetector(
       onTap: () => _flyToChild(child),
       child: Container(
@@ -332,8 +335,8 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
           ],
         ),
         child: ClipOval(
-          child: Image.asset(
-            'assets/img/child1.png',
+          child: Image.memory(
+            point.imageData,
             fit: BoxFit.cover,
           ),
         ),
@@ -365,9 +368,12 @@ class _MapPageState extends State<MapPage> with TickerProviderStateMixin {
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children:
-                children.map((child) => _buildChildAvatar(child)).toList(),
-          ),
+            children: List.generate(children.length, (index) {
+              final child = children[index];
+              final point = points[index];
+              return _buildChildAvatar(child, point); 
+            }),
+          )
         ),
       ),
     );
