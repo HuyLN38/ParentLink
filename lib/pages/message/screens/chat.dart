@@ -325,61 +325,63 @@ class _ChatScreenState extends State<ChatScreen> {
 
           final userImage = widget.user.image;
 
-          return Row(
-            children: [
-              IconButton(
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.arrow_back_ios_new),
-              ),
-              CircleAvatar(
-                backgroundImage: userImage != null && userImage.isNotEmpty
-                    ? FileImage(File(userImage))
-                    : const AssetImage('assets/img/avatar_mom.png')
-                as ImageProvider,
-                child: userImage != null && userImage.isNotEmpty
-                    ? null
-                    : const Icon(Icons.person_3_sharp),
-              ),
-              const SizedBox(width: 10),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.user.name ?? 'Unknown User',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.bold,
+          return Padding(
+            padding: const EdgeInsets.only(top: 20),
+            child: Row(
+              children: [
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.arrow_back_ios_new),
+                ),
+                CircleAvatar(
+                  backgroundImage: userImage != null && userImage.isNotEmpty
+                      ? FileImage(File(userImage))
+                      : const AssetImage('assets/img/avatar_mom.png')
+                  as ImageProvider,
+                  child: userImage != null && userImage.isNotEmpty
+                      ? null
+                      : const Icon(Icons.person_3_sharp),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                      widget.user.name ?? 'Unknown User',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      list.isNotEmpty
+                          ? list[0].isOnline!
+                          ? 'Online'
+                          : MyDateUtil.getLastActiveTime(
+                          context: context,
+                          lastActive: list[0].lastActive!)
+                          : MyDateUtil.getLastActiveTime(
+                          context: context,
+                          lastActive: widget.user.lastActive!),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.black54,
+                        fontWeight: FontWeight.normal,
+                      ),
+                  ),
+                const Spacer(),
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: IconButton(
+                    onPressed: _handleCall,
+                    icon: Icon(
+                      _isInCall ? Icons.call_end : Icons.video_call,
+                      size: 30,
+                      color: _isInCall ? Colors.red : Colors.green,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    list.isNotEmpty
-                        ? list[0].isOnline!
-                        ? 'Online'
-                        : MyDateUtil.getLastActiveTime(
-                        context: context,
-                        lastActive: list[0].lastActive!)
-                        : MyDateUtil.getLastActiveTime(
-                        context: context,
-                        lastActive: widget.user.lastActive!),
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Colors.black54,
-                      fontWeight: FontWeight.normal,
-                    ),
-
                 ),
-              IconButton(
-                onPressed: _handleCall,
-                icon: Icon(
-                  _isInCall ? Icons.call_end : Icons.video_call,
-                  color: _isInCall ? Colors.red : Colors.green,
-                ),
-              ),
-            ],
-          )]);
+                ]),
+          );
         },
       ),
     );
