@@ -112,8 +112,8 @@ class FirstTaskHandler extends TaskHandler {
   geo.Position? currentPosition;
   geo.Position? lastPosition;
   geo.Position? stopPossition;
-  bool initStop = true;
-  bool isInGeoFen = true;
+  bool initStop = false;
+  bool isInGeoFen = false;
   double stopSpeed = 2;
   double geoFenRadius = 50;
   double currentSpeed = 0;
@@ -157,10 +157,10 @@ class FirstTaskHandler extends TaskHandler {
       currentPosition = await geo.Geolocator.getCurrentPosition(
         locationSettings: locationSettings,
       );
+
       if (lastPosition == null) {
         print('lastPosition is null, initializing with currentPosition.');
         lastPosition = currentPosition;
-        stopPossition = currentPosition;
         await _sendData(lastPosition);
         return;
       }
@@ -269,7 +269,7 @@ class FirstTaskHandler extends TaskHandler {
   }
 
   void checkInGeoFen() {
-    if (lastPosition == null) {
+    if (stopPossition == null) {
       isInGeoFen = false;
       return;
     }

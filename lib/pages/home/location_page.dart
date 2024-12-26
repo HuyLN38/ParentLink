@@ -6,14 +6,13 @@ import 'package:parent_link/model/child/child_state.dart';
 import 'package:parent_link/model/control/control_child_location.dart';
 import 'package:parent_link/theme/app.theme.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class LocationPage extends StatefulWidget {
- final ChildState childState;
+  final ChildState childState;
 
-    const LocationPage({
+  const LocationPage({
     super.key,
-    required this.childState, 
+    required this.childState,
   });
 
   @override
@@ -21,22 +20,22 @@ class LocationPage extends StatefulWidget {
 }
 
 class _LocationPageState extends State<LocationPage> {
-@override
+  @override
   void initState() {
     super.initState();
-  _initialization();
+    _initialization();
   }
-  Future<void> _initialization() async{
+
+  Future<void> _initialization() async {
     final provider = Provider.of<ControlChildLocation>(context, listen: false);
-    provider.fetchChildLocations( widget.childState.childId);
+    provider.fetchChildLocations(widget.childState.childId);
   }
+
   @override
   Widget build(BuildContext context) {
-      final childStateList = context.watch<ControlChildLocation>().getChildLocationList;
+    final childStateList =
+        context.watch<ControlChildLocation>().getChildLocationList;
     //access child' location list
-
-
-
 
     return Scaffold(
       backgroundColor: Apptheme.colors.white,
@@ -117,15 +116,16 @@ class _LocationPageState extends State<LocationPage> {
                     ),
                     //current activity
                     Text(
-                    childStateList.isNotEmpty && childStateList[0].location != null
-                        ? 'Located on ${childStateList[0].location}'
-                        : 'Location not available',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Apptheme.colors.gray,
-                      fontSize: 16,
+                      childStateList.isNotEmpty &&
+                              childStateList[0].location != null
+                          ? 'Located on ${childStateList[0].location}'
+                          : 'Location not available',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Apptheme.colors.gray,
+                        fontSize: 16,
+                      ),
                     ),
-                  ),
                     const SizedBox(
                       height: 4,
                     ),
@@ -185,7 +185,7 @@ class _LocationPageState extends State<LocationPage> {
               ),
             ),
           ),
-          
+
           //call and message button
           Positioned(
               bottom: 20,

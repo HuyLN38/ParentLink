@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'package:parent_link/theme/colors.dart';
 import 'package:provider/provider.dart';
 
 import 'package:flutter/material.dart';
@@ -124,85 +123,103 @@ class ChildStateTile extends StatelessWidget {
                     ],
                   ),
                 ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Align(
-                alignment: Alignment.topRight,
-                child: GestureDetector(
-                  onTap: () {
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: Colors.white, 
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(10)), 
-                      ),
-                      builder: (BuildContext context) {
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              child: Container(
-                                width: 40,
-                                height: 4,
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade400,
-                                  borderRadius: BorderRadius.circular(2),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: GestureDetector(
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          backgroundColor: Colors.white,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(10)),
+                          ),
+                          builder: (BuildContext context) {
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Padding(
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 10),
+                                  child: Container(
+                                    width: 40,
+                                    height: 4,
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade400,
+                                      borderRadius: BorderRadius.circular(2),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
-                            ListTile(
-                              leading: const Icon(Icons.delete, color: Colors.red),
-                              title: const Text('Delete', style: TextStyle(color: Colors.red)),
-                              onTap: () async {
-                                Navigator.of(context).pop(); 
-                                final bool? confirmed = await showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return AlertDialog(
-                                      title: const Text('Confirm Delete'),
-                                      content: const Text('Are you sure you want to delete this child?'),
-                                      actions: <Widget>[
-                                        TextButton(
-                                          onPressed: () => Navigator.of(context).pop(false), 
-                                          child: const Text('Cancel', style: TextStyle(color: Colors.black)),
-                                        ),
-                                        TextButton(
-                                          onPressed: () => Navigator.of(context).pop(true), 
-                                          child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                                        ),
-                                      ],
+                                ListTile(
+                                  leading: const Icon(Icons.delete,
+                                      color: Colors.red),
+                                  title: const Text('Delete',
+                                      style: TextStyle(color: Colors.red)),
+                                  onTap: () async {
+                                    Navigator.of(context).pop();
+                                    final bool? confirmed = await showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: const Text('Confirm Delete'),
+                                          content: const Text(
+                                              'Are you sure you want to delete this child?'),
+                                          actions: <Widget>[
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context)
+                                                      .pop(false),
+                                              child: const Text('Cancel',
+                                                  style: TextStyle(
+                                                      color: Colors.black)),
+                                            ),
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context)
+                                                      .pop(true),
+                                              child: const Text('Delete',
+                                                  style: TextStyle(
+                                                      color: Colors.red)),
+                                            ),
+                                          ],
+                                        );
+                                      },
                                     );
+
+                                    if (confirmed == true) {
+                                      try {
+                                        await context
+                                            .read<ControlChildState>()
+                                            .deleteChild(childState!.childId!);
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                              content: Text(
+                                                  'Child deleted successfully')),
+                                        );
+                                      } catch (e) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          SnackBar(
+                                              content: Text(
+                                                  'Failed to delete child: $e')),
+                                        );
+                                        print(e);
+                                      }
+                                    }
                                   },
-                                );
-                
-                                if (confirmed == true) {
-                                  try {
-                                    await context
-                                        .read<ControlChildState>()
-                                        .deleteChild(childState!.childId!);
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Child deleted successfully')),
-                                    );
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Failed to delete child: $e')),
-                                    );
-                                    print(e);
-                                  }
-                                }
-                              },
-                            ),
-                          ],
+                                ),
+                              ],
+                            );
+                          },
                         );
                       },
-                    );
-                  },
-                  child: const Icon(Icons.more_horiz), 
+                      child: const Icon(Icons.more_horiz),
+                    ),
+                  ),
                 ),
-                ),
-              ),
-
               ],
             ),
           ),

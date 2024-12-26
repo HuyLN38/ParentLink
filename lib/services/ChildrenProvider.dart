@@ -1,10 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:http/http.dart' as http;
-import 'package:provider/provider.dart';
 import 'dart:convert';
 
 import '../model/child.dart';
-import 'ChildrenProvider.dart';
 
 class ChildrenService {
   final BuildContext context;
