@@ -1,3 +1,4 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -7,6 +8,7 @@ import '../api/apis.dart';
 class WebRTCService {
   RTCPeerConnection? _peerConnection;
   String? _currentCallId;
+  String? get currentCallId=> _currentCallId;
 
   final _configuration = {
     'iceServers': [
@@ -55,7 +57,7 @@ class WebRTCService {
     try {
       // First check permissions
       final bool hasPermissions = await _handlePermissions();
-      if (!hasPermissions) {
+      if (!(await Permission.camera.isGranted) || !(await Permission.microphone.isGranted)) {
         throw Exception('Camera and microphone permissions are required');
       }
 
@@ -79,6 +81,8 @@ class WebRTCService {
           // Display remote video when received
           remoteRenderer.srcObject = event.streams[0];
           print('[Caller] Remote stream set to renderer');
+        } else{
+          print('[Caller] No remote received');
         }
       };
 
@@ -93,7 +97,7 @@ class WebRTCService {
       };
 
       // Set up handler for ICE candidates
-      _peerConnection!.onIceCandidate = (RTCIceCandidate candidate) async {
+      _peerConnection!.onIceCandidate = (candidate) async {
         print('[Caller] New ICE candidate: ${candidate.candidate}');
         // Store ICE candidate in Firebase
         await FirebaseFirestore.instance
@@ -206,7 +210,7 @@ class WebRTCService {
 
       // Add our local video/audio tracks
       localStream.getTracks().forEach((track) {
-        print('[Receiver] Adding track: ${track.kind}');
+        print('[Caller] Adding track: ${track.kind}');
         _peerConnection!.addTrack(track, localStream);
       });
 
@@ -231,12 +235,20 @@ class WebRTCService {
 
       // Handle our ICE candidates
       _peerConnection!.onIceCandidate = (RTCIceCandidate candidate) async {
-        print('[Receiver] New ICE candidate: ${candidate.candidate}');
-        await FirebaseFirestore.instance
-            .collection('calls')
-            .doc(_currentCallId)
-            .collection('receiverCandidates')
-            .add(candidate.toMap());
+        try {
+          print('[Receiver] New ICE candidate: ${candidate.candidate}');
+
+          // Add ICE candidates to Firestore
+          await FirebaseFirestore.instance
+              .collection('calls')
+              .doc(_currentCallId)
+              .collection('receiverCandidates')
+              .add(candidate.toMap());
+
+          print('[Receiver] ICE candidate added to Firestore');
+        } catch (e) {
+          print('[Receiver] Error adding ICE candidate: $e');
+        }
       };
 
       // Get the offer from Firebase

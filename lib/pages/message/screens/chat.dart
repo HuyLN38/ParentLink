@@ -24,6 +24,8 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final WebRTCService _webRTCService = WebRTCService();
   bool _isInCall = false;
+  bool _isMicOn = true;
+  bool _isCamOn = true;
   bool _isCameraInitialized = false;
   final _localRenderer = RTCVideoRenderer();
   final _remoteRenderer = RTCVideoRenderer();
@@ -222,6 +224,31 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 
+  void _toggleCam(){
+    if(_localStream != null) {
+      //get video track from stream
+      final videoTrack = _localStream!.getVideoTracks().first;
+
+      //Set state of camera
+      videoTrack.enabled = !videoTrack.enabled;
+      setState(() {
+        _isCamOn = videoTrack.enabled;
+      });
+      print('[ChatScreen] Camera is ${_isCamOn ? "On" : "Off"}');
+    }
+  }
+  
+  void _toggleMic(){
+    if(_localStream != null){
+      final audioTrack = _localStream!.getAudioTracks().first;
+      audioTrack.enabled = !audioTrack.enabled;
+      setState(() {
+        _isMicOn = audioTrack.enabled;
+      });
+      print('[ChatScreen] Microphone is ${_isMicOn ? "On" : "Off"}');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -289,6 +316,23 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                // On/Off micro
+                FloatingActionButton(
+                  backgroundColor: _isMicOn ? Colors.grey : Colors.red,
+                  onPressed: _toggleMic,
+                  child: Icon(_isMicOn ? Icons.mic : Icons.mic_off),
+                ),
+                const SizedBox(width: 20),
+
+                // On/Off camera
+                FloatingActionButton(
+                  backgroundColor: _isCamOn ? Colors.grey : Colors.red,
+                  onPressed: _toggleCam,
+                  child: Icon(_isCamOn ? Icons.videocam : Icons.videocam_off),
+                ),
+                const SizedBox(width: 20),
+
+                // End call
                 FloatingActionButton(
                   backgroundColor: Colors.red,
                   onPressed: _handleCall,
@@ -301,6 +345,7 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
+
 
   Widget _appBar() {
     return Padding(
