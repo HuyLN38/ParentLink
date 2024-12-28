@@ -103,6 +103,7 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           );
         },
+        onCamera: _showCameraRequestDialog,      
       );
     } catch (e) {
       print('Error accepting call: $e');
@@ -145,12 +146,9 @@ class _ChatScreenState extends State<ChatScreen> {
       if (_localStream != null) {
         _localRenderer.srcObject = _localStream;
 
-        //auto turn off cam when call is implemented
-        final videoTrack = _localStream!.getVideoTracks().first;
-        videoTrack.enabled = false;
         setState(() {
           _isCameraInitialized = true;
-          _isCamOn = false;
+          _isCamOn = true;
         });
       }
     } catch (e) {
@@ -228,6 +226,53 @@ class _ChatScreenState extends State<ChatScreen> {
       _localStream = null;
     }
   }
+
+  void _showCameraRequestDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Please turn Camera on'),
+        content: const Text('The caller is asking you to allow the camera. Do you agree?'),
+        actions: [
+          // Refuse button
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close dialog
+              print('[Receiver] Camera request refused.');
+              // Update status to Firestore
+              FirebaseFirestore.instance
+                  .collection('calls')
+                  .doc(_webRTCService.currentCallId)
+                  .update({'camRequest.fromReceiver': false});
+            },
+            child: const Text('Refuse'),
+          ),
+          // Accept button
+          TextButton(
+            onPressed: () async {
+              Navigator.of(context).pop();
+              await _webRTCService.enableCamera(); // Turn on camera
+              print('[Receiver] Camera enabled.');
+              FirebaseFirestore.instance
+                  .collection('calls')
+                  .doc(_webRTCService.currentCallId)
+                  .update({'camRequest.fromReceiver': true});
+            },
+            child: const Text('Allow'),
+          ),
+          // Reject call
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              print('[Receiver] Camera request dialog dismissed.');
+            },
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   void _toggleCam(){
     if(_localStream != null) {
