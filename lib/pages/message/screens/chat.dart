@@ -144,8 +144,13 @@ class _ChatScreenState extends State<ChatScreen> {
 
       if (_localStream != null) {
         _localRenderer.srcObject = _localStream;
+
+        //auto turn off cam when call is implemented
+        final videoTrack = _localStream!.getVideoTracks().first;
+        videoTrack.enabled = false;
         setState(() {
           _isCameraInitialized = true;
+          _isCamOn = false;
         });
       }
     } catch (e) {
