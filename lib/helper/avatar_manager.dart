@@ -67,10 +67,9 @@ class AvatarManager {
   }
 
   // Download and save avatar
-  static Future<String> _downloadAndSaveAvatar(
-      String url, String childId) async {
+  static Future<String> downloadAndSaveAvatar(
+      String url, String userId) async {
     final response = await http.get(Uri.parse(url));
-
     if (response.statusCode != 200) {
       throw Exception('Failed to download avatar');
     }
@@ -81,7 +80,7 @@ class AvatarManager {
 
     final directory = await _localDir;
     final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final path = '${directory.path}/$childId.jpg';
+    final path = '${directory.path}/$userId.jpg';
 
     // Decode base64 data
     List<int> imageBytes;
@@ -135,7 +134,7 @@ class AvatarManager {
           !File(currentPath).existsSync() ||
           _needsUpdate(storedTimestamp, lastModified)) {
         // Download and save new avatar
-        final newPath = await _downloadAndSaveAvatar(avatarUrl, childId);
+        final newPath = await downloadAndSaveAvatar(avatarUrl, childId);
 
         // Update metadata
         await _saveAvatarPath(childId, newPath);
@@ -160,4 +159,46 @@ class AvatarManager {
       rethrow;
     }
   }
+
+    Future<String> processImageForUpload(File imageFile) async {
+    try {
+      final bytes = await imageFile.readAsBytes();
+      final image = img.decodeImage(bytes);
+
+      if (image == null) throw Exception('Failed to decode image');
+
+      // Resize if image is too large
+      img.Image resizedImage = image;
+      if (image.width > 1024 || image.height > 1024) {
+        resizedImage = img.copyResize(
+          image,
+          width: image.width > image.height ? 1024 : null,
+          height: image.height >= image.width ? 1024 : null,
+        );
+      }
+
+      final compressedBytes = img.encodeJpg(resizedImage, quality: 85);
+      final base64Image = base64Encode(compressedBytes);
+
+      if (!isValidBase64(base64Image)) {
+        throw Exception('Invalid base64 string generated');
+      }
+
+      return base64Image;
+    } catch (e) {
+      print('Error processing image: $e');
+      rethrow;
+    }
+  }
+
+  bool isValidBase64(String str) {
+    try {
+      base64Decode(str);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  
 }

@@ -1,13 +1,17 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:parent_link/api/apis.dart';
+import 'package:parent_link/helper/avatar_manager.dart';
 import 'package:parent_link/model/control/control_main_user.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:parent_link/theme/app.theme.dart';
 import 'package:uuid/uuid.dart';
+import 'package:http/http.dart' as http;
+
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -38,28 +42,31 @@ class _EditProfilePageState extends State<EditProfilePage> {
       _nameController.text = user.username;
       _phoneController.text = user.phoneNumber;
       _image = user.image; 
-      await _loadProfileImage(user);
+      // await _loadProfileImage(user);
     }
   }
 
-  Future<void> _loadProfileImage(ControlMainUser user) async {
-    final directory = await _getAvatarDirectory();
-    final profileImageFile = File('${directory.path}/${user.username}_avatar.jpg');
-    if (profileImageFile.existsSync()) {
-      setState(() {
-        _selectedImage = profileImageFile;
-      });
-    }
-  }
+  // Future<void> _loadProfileImage(ControlMainUser user) async {
+  //   final directory = await _getAvatarDirectory();
+  //   final profileImageFile = File('${directory.path}/${user.username}_avatar.jpg');
+  //   if (profileImageFile.existsSync()) {
+  //     setState(() {
+  //       _selectedImage = profileImageFile;
+  //     });
+  //   }
+  // }
 
   Future<void> _pickImage() async {
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? userID = prefs.getString('token');
     try {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: ImageSource.gallery);
 
       if (pickedFile != null) {
         final pickedImageFile = File(pickedFile.path);
-        final imageName = '${uuid.v4()}_avatar.jpg';
+        final imageName = '${userID}.jpg';
         final avatarFile = await _saveAvatarImage(pickedImageFile, imageName);
         _saveChanges();
 
@@ -110,17 +117,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
     try {
       String? avatarUrl;
-      if (_selectedImage != null) {
-        avatarUrl = await uploadAvatar(_selectedImage!);
-      }
+      //sent to homemake sever
+        avatarUrl = await uploadAvatar(_selectedImage!, token);
 
+// sent to firebase 
       await apis.updateUser(
         token,
         _nameController.text,
         _phoneController.text,
         image: avatarUrl,
       );
-
+// save to notifer
       Provider.of<ControlMainUser>(context, listen: false).updateUser(
         _nameController.text,
         _phoneController.text,
@@ -137,8 +144,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
   }
 
-  Future<String> uploadAvatar(File image) async {
+  Future<String> uploadAvatar(File image, String token) async {
     final avatarDir = await _getAvatarDirectory();
+
+        final base64Image =
+        await AvatarManager().processImageForUpload(image);
+
+    final Map<String, dynamic> requestBody = {"avatar": base64Image};
+
+   var response = await http.post(
+      Uri.parse('https://huyln.info/parentlink/users/$token/avatar'),
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(requestBody),
+    );
+    if (response.statusCode == 200) {
+    print('Avatar uploaded successfully');
+  } else {
+    throw Exception('Failed to upload avatar: ${response.statusCode}');
+  }
+    
     return '${avatarDir.path}/${image.uri.pathSegments.last}';
   }
 
