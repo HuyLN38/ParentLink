@@ -8,7 +8,8 @@ import '../api/apis.dart';
 class WebRTCService {
   RTCPeerConnection? _peerConnection;
   String? _currentCallId;
-  String? get currentCallId=> _currentCallId;
+  MediaStream? _localStream;
+  String? get currentCallId => _currentCallId;
 
   final _configuration = {
     'iceServers': [
@@ -42,27 +43,59 @@ class WebRTCService {
     return pc;
   }
 
+  //Request Camera from receiver
+  Future<void> requestCamera() async{
+    if(_currentCallId != null){
+      await FirebaseFirestore.instance
+          .collection('calls')
+          .doc(_currentCallId)
+          .update({
+        'camRequest.fromCaller': true,
+      });
+    }
+  }
+
+  //Enable Camera for Receiver
+  Future<void> enableCamera() async{
+    if(_localStream != null){
+      final videoTrack = _localStream!.getVideoTracks().first;
+      videoTrack.enabled = true;
+
+      if(_currentCallId != null){
+        await FirebaseFirestore.instance
+            .collection('calls')
+            .doc(_currentCallId)
+            .update({
+          'camRequest.fromReceiver': true,
+        });
+      }
+    }
+  }
+
   // Initialize a call to another user
-  Future<void> initiateCall(
-    String receiverId, // ID of user being called
-    MediaStream localStream, // Local video/audio stream
-    RTCVideoRenderer localRenderer, // Widget to display local video
-    RTCVideoRenderer remoteRenderer, {
-    // Widget to display remote video
-    required Function onCallAccepted, // Callback when call is accepted
-    required Function onCallRejected, // Callback when call is rejected
-    required Function onCallEnded, // Callback when call ends
-    required Function(String) onError, // Callback for errors
-  }) async {
+  Future<void> initiateCall(String receiverId, // ID of user being called
+      MediaStream localStream, // Local video/audio stream
+      RTCVideoRenderer localRenderer, // Widget to display local video
+      RTCVideoRenderer remoteRenderer, {
+        // Widget to display remote video
+        required Function onCallAccepted, // Callback when call is accepted
+        required Function onCallRejected, // Callback when call is rejected
+        required Function onCallEnded, // Callback when call ends
+        required Function(String) onError, // Callback for errors
+      }) async {
     try {
       // First check permissions
       final bool hasPermissions = await _handlePermissions();
-      if (!(await Permission.camera.isGranted) || !(await Permission.microphone.isGranted)) {
+      if (!(await Permission.camera.isGranted) ||
+          !(await Permission.microphone.isGranted)) {
         throw Exception('Camera and microphone permissions are required');
       }
 
       // Generate unique call ID using timestamp
-      _currentCallId = DateTime.now().millisecondsSinceEpoch.toString();
+      _currentCallId = DateTime
+          .now()
+          .millisecondsSinceEpoch
+          .toString();
 
       // Create peer connection
       _peerConnection = await _createPeerConnection();
@@ -81,7 +114,7 @@ class WebRTCService {
           // Display remote video when received
           remoteRenderer.srcObject = event.streams[0];
           print('[Caller] Remote stream set to renderer');
-        } else{
+        } else {
           print('[Caller] No remote received');
         }
       };
@@ -192,14 +225,14 @@ class WebRTCService {
   }
 
   // Handle incoming call
-  Future<void> handleIncomingCall(
-    String callId, // ID of incoming call
-    MediaStream localStream, // Local video/audio stream
-    RTCVideoRenderer localRenderer, // Widget to display local video
-    RTCVideoRenderer remoteRenderer, {
-    // Widget to display remote video
-    required Function(String) onError, // Callback for errors
-  }) async {
+  Future<void> handleIncomingCall(String callId, // ID of incoming call
+      MediaStream localStream, // Local video/audio stream
+      RTCVideoRenderer localRenderer, // Widget to display local video
+      RTCVideoRenderer remoteRenderer, {
+        // Widget to display remote video
+        required Function(String) onError, // Callback for errors
+        required Function onCamera, //Callback for camera request
+      }) async {
     try {
       _currentCallId = callId;
       print('[Receiver] Handling incoming call: $callId');
@@ -283,6 +316,20 @@ class WebRTCService {
       });
       print('[Receiver] Answer stored in Firestore');
 
+      //Listen for Camera request from caller
+      FirebaseFirestore.instance
+      .collection('calls')
+      .doc(_currentCallId)
+      .snapshots()
+      .listen((snapshot){
+        if(!snapshot.exists) return;
+
+        final data = snapshot.data()!;
+        if (data['camRequest'] != null && data['camRequest']['fromCaller'] == true){
+          onCamera();
+        }
+      });
+
       // Listen for ICE candidates from caller
       FirebaseFirestore.instance
           .collection('calls')
@@ -302,7 +349,8 @@ class WebRTCService {
             await _peerConnection!.addCandidate(candidate);
           }
         }
-      });
+      }
+      );
     } catch (e) {
       print('[Receiver] Error in handleIncomingCall: $e');
       await endCall();
@@ -346,3 +394,5 @@ class WebRTCService {
     endCall();
   }
 }
+
+
