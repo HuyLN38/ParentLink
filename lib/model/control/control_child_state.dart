@@ -39,9 +39,9 @@ class ControlChildState extends ChangeNotifier {
           // Only update avatar if we have a valid childId
           if (childState.childId != null) {
             print(
-                "https://huyln.info/parentlink/users/$token/children-avatar/${childState.childId}");
+                "https://huyln.info/parentlink/users/${childState.childId}/avatar");
             await childState.updateAvatar(
-                'https://huyln.info/parentlink/users/$token/children-avatar/${childState.childId}');
+                'https://huyln.info/parentlink/users/${childState.childId}/avatar');
           } else {
             print('No childId found for ${childState.name}');
           }

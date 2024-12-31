@@ -66,7 +66,7 @@ class _MainPageState extends State<MainPage> {
   Future<void> _initializeApp() async {
     _pagesFuture = loadPages();
     Apis.getFirebaseMessagingToken();
-    apis.getMainUserInfor(context);
+    await  apis.getMainUserInfor(context);
     await _requestLocationPermission();
     await _startForegroundServiceIfNeeded();
   }

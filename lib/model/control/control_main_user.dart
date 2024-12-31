@@ -1,9 +1,10 @@
+
 import 'package:flutter/material.dart';
 
 class ControlMainUser extends ChangeNotifier {
   String _username = 'Parent';
   String _phoneNumber = '';
-  String _image = 'assets/img/avatar_mom.png';
+  String _image = 'assets/img/avatar_mom.png';  // Default image
 
   String get username => _username;
   String get phoneNumber => _phoneNumber;
@@ -16,3 +17,6 @@ class ControlMainUser extends ChangeNotifier {
     notifyListeners(); 
   }
 }
+
+
+

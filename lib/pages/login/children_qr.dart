@@ -272,7 +272,6 @@ class _ScanCodePageState extends State<ScanCodePage> {
         await prefs.setString('parentId', qr);
         await prefs.setString('token', requestBody['childId']);
         await prefs.setString('role', 'children');
-        print("FUCKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK");
         await Apis.createUser(requestBody['childId'], _nameController.text,
             '${directory.path}/${requestBody['childId']}.jpg');
         await Apis.addChatUserById(qr);
@@ -647,7 +646,7 @@ class _ScanCodePageState extends State<ScanCodePage> {
                                       floatingLabelStyle:
                                           const TextStyle(color: Colors.blue),
                                     ),
-                                    keyboardType: TextInputType.datetime,
+                                    keyboardType: TextInputType.text,
                                     onChanged: (value) => dialogSetState(() {}),
                                   ),
                                 ),

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:parent_link/helper/uuid.dart' as globals;
+import 'package:parent_link/main.dart';
 import 'package:parent_link/model/control/control_main_user.dart';
 import 'package:provider/provider.dart';
 import '../helper/avatar_manager.dart';
@@ -181,16 +182,26 @@ Future<void> getMainUserInfor(BuildContext context) async {
 
     if (userDoc.exists) {
       var userData = userDoc.data() as Map<String, dynamic>;
-
       // get notifier from Provider
       final mainUser = Provider.of<ControlMainUser>(context, listen: false);
-
       // update in4 to notifier
       mainUser.updateUser(
         userData['name'] ?? 'Parent', 
         userData['phoneNumber'] ?? 'Parent', 
         userData['image'] ?? 'assets/img/avatar_mom.png', 
       );
+
+            // decode image of user
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? userID = prefs.getString('token');
+      String avatarUrl = 'https://huyln.info/parentlink/users/$userID/avatar';
+      try {
+        await AvatarManager.downloadAndSaveAvatar(
+           avatarUrl, userID!);
+    } catch (e) {
+      print('Error save avatar of main user: $e');
+    }
+
 
       log('User information saved to ControlMainUser');
     } else {
