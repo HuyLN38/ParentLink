@@ -1,5 +1,8 @@
 import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:parent_link/pages/login/login_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AuthService {
   final String baseUrl =
@@ -69,4 +72,15 @@ class AuthService {
       return {'error': 'Failed to connect to the server'};
     }
   }
+    // Logout function 
+  Future<void> logout(BuildContext context) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.clear(); // Clear all SharedPreferences data
+      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (contect)=> LoginPage()), (Route<dynamic> route) => false,);
+    } catch (e) {
+      print("Error during logout: $e");
+    }
+  }
 }
+

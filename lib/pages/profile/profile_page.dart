@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:parent_link/model/control/control_main_user.dart';
+import 'package:parent_link/pages/login/handlers/AuthServices.dart';
 import 'package:parent_link/theme/app.theme.dart';
 import 'package:provider/provider.dart';
 
@@ -209,6 +210,8 @@ class _ProfilePageState extends State<ProfilePage> {
                               "Terms and conditions",
                               Icon(Icons.arrow_forward_ios,
                                   size: 20, color: Apptheme.colors.gray)),
+                            const SizedBox(height: 22),
+                            logoutButton(context)
                         ],
                       ),
                     ),
@@ -247,6 +250,39 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             icon,
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Logout
+    Widget logoutButton(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed:(){AuthService().logout(context);},
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.red,
+          foregroundColor: Colors.red.shade200,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+            side: BorderSide.none,
+          ),
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Logout',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white,
+                fontWeight: FontWeight.normal,
+              ),
+            ),
           ],
         ),
       ),
