@@ -10,6 +10,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class ForegroundService {
   Timer? _timer;
+  int fetchDuration = 5000;
+
+  void changefetchDuration(int newFetchDuration) {
+    this.fetchDuration = newFetchDuration;
+  }
 
   Future<void> requestPermissions() async {
     if (Platform.isAndroid) {
@@ -25,7 +30,7 @@ class ForegroundService {
         //
         // To restart the service on device reboot or unexpected problem, you need to allow below permission.
         if (!await FlutterForegroundTask.isIgnoringBatteryOptimizations) {
-          // This function requires `android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` permission.
+          // This function requires android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS permission.
           await FlutterForegroundTask.requestIgnoreBatteryOptimization();
         }
 
@@ -56,7 +61,7 @@ class ForegroundService {
         playSound: false,
       ),
       foregroundTaskOptions: ForegroundTaskOptions(
-        eventAction: ForegroundTaskEventAction.repeat(5000),
+        eventAction: ForegroundTaskEventAction.repeat(fetchDuration),
         autoRunOnBoot: true,
         autoRunOnMyPackageReplaced: true,
         allowWakeLock: true,
@@ -117,8 +122,10 @@ class FirstTaskHandler extends TaskHandler {
   double stopSpeed = 2;
   double geoFenRadius = 50;
   double currentSpeed = 0;
+  int cnt = 0;
+  int cntInterval = 1;
 
-  final geo.LocationSettings locationSettings = geo.LocationSettings(
+  geo.LocationSettings locationSettings = geo.LocationSettings(
     accuracy: geo.LocationAccuracy.high,
     distanceFilter: 100,
   );
@@ -152,8 +159,13 @@ class FirstTaskHandler extends TaskHandler {
   }
 
   Future<void> _sendDataIfNeed() async {
+    cnt = cnt + 1;
+    if (cnt < cntInterval) {
+      return;
+    }
     try {
       // Fetch the current position
+      adjustAccuracyAndDisBasedOnSpeed();
       currentPosition = await geo.Geolocator.getCurrentPosition(
         locationSettings: locationSettings,
       );
@@ -177,6 +189,8 @@ class FirstTaskHandler extends TaskHandler {
 
       currentSpeed = speedConvertToKm(currentPosition?.speed ?? 0);
       final double distanceMoved = calDistance(lastPosition, currentPosition);
+      final double distanceMovedWithFilter =
+          calDistanceWithFilter(lastPosition, currentPosition);
 
       // Check and update geo-fence and movement state
       checkInGeoFen();
@@ -229,7 +243,7 @@ class FirstTaskHandler extends TaskHandler {
 
       //the stop point was inited and child in geoFen => dont care speed just send data
       if (initStop && isInGeoFen) {
-        if (distanceMoved < 15) {
+        if (distanceMovedWithFilter < 15) {
           await _logSpeedAndUpdateNotification(
               currentSpeed, 'Location does not change');
           return;
@@ -295,6 +309,28 @@ class FirstTaskHandler extends TaskHandler {
     double d = geo.Geolocator.distanceBetween(
         p1!.latitude, p1!.longitude, p2!.latitude, p2!.longitude);
     return d;
+  }
+
+  void adjustAccuracyAndDisBasedOnSpeed() {
+    if (currentSpeed < 5) {
+      updateLocationSettings(geo.LocationAccuracy.low, 15);
+      cntInterval = 6; // Low accuracy for slow speeds
+    } else if (currentSpeed >= 5 && currentSpeed < 20) {
+      updateLocationSettings(geo.LocationAccuracy.medium, 40);
+      cntInterval = 2; // Medium for moderate speeds
+    } else if (currentSpeed >= 20 && currentSpeed < 50) {
+      updateLocationSettings(geo.LocationAccuracy.high, 70);
+      cntInterval = 1; // High for high speeds
+    } else {
+      updateLocationSettings(geo.LocationAccuracy.high, 100);
+      cntInterval = 1;
+    }
+  }
+
+  void updateLocationSettings(
+      geo.LocationAccuracy newAccuracy, int newDistance) {
+    locationSettings = geo.LocationSettings(
+        accuracy: newAccuracy, distanceFilter: newDistance);
   }
 
   double calDistanceWithFilter(geo.Position? p1, geo.Position? p2) {
@@ -376,6 +412,7 @@ class FirstTaskHandler extends TaskHandler {
               'Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}' +
                   'Last update: ${DateTime.now().toString().substring(11, 16)}',
         );
+        cnt = 0;
       } else {
         print(
             'Location: ${locationData.latitude}, ${locationData.longitude},${speedConvertToKm(locationData.speed)}');
@@ -481,6 +518,19 @@ class FirstTaskHandler extends TaskHandler {
   double speedConvertToKm(double? speed) {
     if (speed == null || speed.isNaN || speed.isInfinite) return 1;
     return speed * 3.6; // Convert m/s to km/h
+  }
+
+  double calculateAdaptiveAlpha(double currentSpeed) {
+    double vMin = 0;
+    double vMax = 100;
+    double alphaMin = 0.1;
+    double alphaMax = 0.9;
+
+    // Calculate the adaptive alpha using linear interpolation
+    double alpha = alphaMin +
+        ((currentSpeed - vMin) / (vMax - vMin)) * (alphaMax - alphaMin);
+
+    return alpha;
   }
 
   Future<void> _storeFailedUpdate() async {
